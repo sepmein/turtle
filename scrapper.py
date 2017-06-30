@@ -1,4 +1,10 @@
+''''''
+Scrap quandl for the bitcoin data
+''''''
 import quandl
+import numpy as np
+import tensorflow as tf
+import pandas as pd
 quandl.ApiConfig.api_key = "6ywQ69kRqt26zAsHkFDP"
 ## data
 DIFF = quandl.get("BCHAIN/DIFF")
@@ -34,7 +40,6 @@ NTRAN = quandl.get('BCHAIN/NTRAN')
 MKPRU = quandl.get('BCHAIN/MKPRU')
 
 ## manipulating data
-import pandas as pd
 # concacenating
 DATA = pd.concat(
     [
@@ -45,8 +50,6 @@ DATA = pd.concat(
     axis=1)
 
 ## analysing the data
-import numpy as np
-import tensorflow as tf
 
 ## define feature column
 f_DIFF = tf.contrib.layers.real_valued_column('DIFF', dimension=10)

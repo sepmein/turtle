@@ -7,62 +7,75 @@ import numpy as np
 from sklearn import preprocessing
 
 rawdata = pd.read_csv('cleaned_data.csv')
-data = rawdata.iloc[600:2500]
+## extracted_data = tf.contrib.learn.extract_pandas_data(data.iloc[:,1:])
+raw_labels = [
+    'DIFF', 'TRFEE', 'MKTCP', 'TOTBC', 'MWNUS', 'MWNTD', 'MWTRV', 'AVBLS',
+    'BLCHS', 'ATRCT', 'MIREV', 'HRATE', 'CPTRA', 'CPTRV', 'TRVOU', 'TOUTV',
+    'ETRVU', 'ETRAV', 'NTRBL', 'NADDU', 'NTREP', 'NTRAT', 'NTRAN'
+]
+STARTS_AT = 400
+## convert date string to pandas datetime format
+rawdata['Date'] = pd.to_datetime(rawdata['Date'])
+def gen_days_back(data, days, starts_at):
+    """generate data by days back
+    """
+    rows = data.shape[0]
+    gen_labels = []
+    gen_data = []
+    for i in range(len(raw_labels)):
+        for j in range(days):
+           gen_labels.append(raw_labels[i] + '_' + str(j + 1)) 
+    for i in range(starts_at, rawdata.shape[0]):
+        days_back_data = rawdata[i-days: i]
+        selected_day_back_data = days_back_data.loc[:, 'DIFF':'NTRAN']
+        selected_day_back_data_np = selected_day_back_data.values
+        reshaped = np.reshape(selected_day_back_data_np.T, (1,len(raw_labels) * days))
+        gen_data.append(reshaped)
+    stacked = np.vstack(row for row in gen_data)
+    dataframe = pd.DataFrame(data=stacked,
+                            columns=gen_labels)
+    return dataframe, gen_labels
+
+data, feature_labels = gen_days_back(rawdata, 10, STARTS_AT)
 
 # build input layers
-f_DIFF = tf.contrib.layers.real_valued_column('DIFF')
-f_TRFEE = tf.contrib.layers.real_valued_column('TRFEE')
-f_MKTCP = tf.contrib.layers.real_valued_column('MKTCP')
-f_TOTBC = tf.contrib.layers.real_valued_column('TOTBC')
-f_MWNUS = tf.contrib.layers.real_valued_column('MWNUS')
-f_MWNTD = tf.contrib.layers.real_valued_column('MWNTD')
-f_MWTRV = tf.contrib.layers.real_valued_column('MWTRV')
-f_AVBLS = tf.contrib.layers.real_valued_column('AVBLS')
-f_BLCHS = tf.contrib.layers.real_valued_column('BLCHS')
-f_ATRCT = tf.contrib.layers.real_valued_column('ATRCT')
-f_MIREV = tf.contrib.layers.real_valued_column('MIREV')
-f_HRATE = tf.contrib.layers.real_valued_column('HRATE')
-f_CPTRA = tf.contrib.layers.real_valued_column('CPTRA')
-f_CPTRV = tf.contrib.layers.real_valued_column('CPTRV')
-f_TRVOU = tf.contrib.layers.real_valued_column('TRVOU')
-f_TOUTV = tf.contrib.layers.real_valued_column('TOUTV')
-f_ETRVU = tf.contrib.layers.real_valued_column('ETRVU')
-f_ETRAV = tf.contrib.layers.real_valued_column('ETRAV')
-f_NTRBL = tf.contrib.layers.real_valued_column('NTRBL')
-f_NADDU = tf.contrib.layers.real_valued_column('NADDU')
-f_NTREP = tf.contrib.layers.real_valued_column('NTREP')
-f_NTRAT = tf.contrib.layers.real_valued_column('NTRAT')
-f_NTRAN = tf.contrib.layers.real_valued_column('NTRAN')
+features = []
+for i in range(len(feature_labels)):
+    features.append(tf.contrib.layers.real_valued_column(feature_labels))
 
-## extracted_data = tf.contrib.learn.extract_pandas_data(data.iloc[:,1:])
-feature_labels = ['DIFF', 'TRFEE'
-, 'MKTCP', 'TOTBC', 'MWNUS', 'MWNTD', 'MWTRV', 'AVBLS', 'BLCHS', 'ATRCT', 'MIREV',
-                  'HRATE', 'CPTRA', 'CPTRV', 'TRVOU', 'TOUTV', 'ETRVU', 'ETRAV', 'NTRBL', 'NADDU', 'NTREP', 'NTRAT', 'NTRAN']
 target_label = ['MKPRU']
+
 # building input function
 
 
 def input_fn_train():
     # returns x, y
-    features = {k: tf.constant(data[k].values, shape=[data[k].size, 1]) for k in feature_labels}
-    target = tf.constant(data[target_label].values)
-    return features, target
+    f = {
+        k: tf.constant(
+            preprocessing.normalize(data[k].values), shape=[data[k].size, 1])
+        for k in feature_labels
+    }
+    target = tf.constant(
+        preprocessing.normalize(rawdata[STARTS_AT:][target_label].values),
+        shape=[rawdata[STARTS_AT:][target_label].size, 1])
+    return f, target
+
+
 # building eval function
 
 
 def input_fn_eval():
     pass
+
+
 # building models
 
 estimator = tf.contrib.learn.DNNRegressor(
-    feature_columns=[f_DIFF, f_TRFEE,
-        f_MKTCP, f_TOTBC, f_MWNUS, f_MWNTD, f_MWTRV, f_AVBLS, f_BLCHS, f_ATRCT, f_MIREV,
-                     f_HRATE, f_CPTRA, f_CPTRV, f_TRVOU, f_TOUTV, f_ETRVU, f_ETRAV, f_NTRBL, f_NADDU, f_NTREP, f_NTRAT, f_NTRAN],
-    hidden_units=[200,25],
-    optimizer=tf.train.ProximalAdagradOptimizer(
-        learning_rate=0.001,
-        l1_regularization_strength=0.001
-    ))
+    feature_columns=features,
+    hidden_units=[256, 128, 64]
+#    ,optimizer=tf.train.ProximalAdagradOptimizer(
+#        learning_rate=0.001, l1_regularization_strength=0.001)
+)
 
 # train model
 estimator.fit(input_fn=input_fn_train)

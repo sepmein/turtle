@@ -43,12 +43,12 @@ def gen_days_back(data, labels, days, starts_at):
     return dataframe, gen_labels
 
 ## Building the data by calling the gen_days_back function
-DATA, FEATURE_LABELS = gen_days_back(RAW_DATA, RAW_LABELS, 10, 400)
+GEN_DATA, GEN_FEATURE_LABELS = gen_days_back(RAW_DATA, RAW_LABELS, 10, 400)
 
 # build input layers
 FEATURES = []
-for i in range(len(FEATURE_LABELS)):
-    FEATURES.append(tf.contrib.layers.real_valued_column(FEATURE_LABELS))
+for i in range(len(GEN_FEATURE_LABELS)):
+    FEATURES.append(tf.contrib.layers.real_valued_column(GEN_FEATURE_LABELS))
 
 TARGET_LABEL = ['MKPRU']
 
@@ -63,11 +63,12 @@ def input_fn_train():
     # returns x, y
     features_tf = {
         k: tf.constant(
-            preprocessing.normalize(DATA[k].values), shape=[DATA[k].size, 1])
-        for k in FEATURE_LABELS
+            preprocessing.normalize(GEN_DATA[k].values), shape=[GEN_DATA[k].size, 1])
+        for k in GEN_FEATURE_LABELS
     }
     target = tf.constant(
-        preprocessing.normalize(RAW_DATA[STARTS_AT:][TARGET_LABEL].values),
+        RAW_DATA[STARTS_AT:][TARGET_LABEL].values,
+        #preprocessing.normalize(RAW_DATA[STARTS_AT:][TARGET_LABEL].values),
         shape=[RAW_DATA[STARTS_AT:][TARGET_LABEL].size, 1])
     return features_tf, target
 

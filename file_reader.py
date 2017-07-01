@@ -6,77 +6,92 @@ import tensorflow as tf
 import numpy as np
 from sklearn import preprocessing
 
-rawdata = pd.read_csv('cleaned_data.csv')
+## read data from pre-downloaded csv file
+RAW_DATA = pd.read_csv('cleaned_data.csv')
 ## extracted_data = tf.contrib.learn.extract_pandas_data(data.iloc[:,1:])
-raw_labels = [
+## define raw labels, from which function will generate feature labels
+RAW_LABELS = [
     'DIFF', 'TRFEE', 'MKTCP', 'TOTBC', 'MWNUS', 'MWNTD', 'MWTRV', 'AVBLS',
     'BLCHS', 'ATRCT', 'MIREV', 'HRATE', 'CPTRA', 'CPTRV', 'TRVOU', 'TOUTV',
     'ETRVU', 'ETRAV', 'NTRBL', 'NADDU', 'NTREP', 'NTRAT', 'NTRAN'
 ]
+## Define how much rows should be skipped
+## Because at the initial year of bitcoin, there weren't any $-BTC data.
+## So it should be skipped
 STARTS_AT = 400
 ## convert date string to pandas datetime format
-rawdata['Date'] = pd.to_datetime(rawdata['Date'])
-def gen_days_back(data, days, starts_at):
+RAW_DATA['Date'] = pd.to_datetime(RAW_DATA['Date'])
+
+
+def gen_days_back(data, labels, days, starts_at):
     """generate data by days back
     """
-    rows = data.shape[0]
     gen_labels = []
     gen_data = []
-    for i in range(len(raw_labels)):
+    for label in labels:
         for j in range(days):
-           gen_labels.append(raw_labels[i] + '_' + str(j + 1)) 
-    for i in range(starts_at, rawdata.shape[0]):
-        days_back_data = rawdata[i-days: i]
+            gen_labels.append(label + '_' + str(j + 1))
+    for k in range(starts_at, data.shape[0]):
+        days_back_data = data[k - days:k]
         selected_day_back_data = days_back_data.loc[:, 'DIFF':'NTRAN']
         selected_day_back_data_np = selected_day_back_data.values
-        reshaped = np.reshape(selected_day_back_data_np.T, (1,len(raw_labels) * days))
+        reshaped = np.reshape(selected_day_back_data_np.T,
+                              (1, len(labels) * days))
         gen_data.append(reshaped)
     stacked = np.vstack(row for row in gen_data)
-    dataframe = pd.DataFrame(data=stacked,
-                            columns=gen_labels)
+    dataframe = pd.DataFrame(data=stacked, columns=gen_labels)
     return dataframe, gen_labels
 
-data, feature_labels = gen_days_back(rawdata, 10, STARTS_AT)
+## Building the data by calling the gen_days_back function
+DATA, FEATURE_LABELS = gen_days_back(RAW_DATA, RAW_LABELS, 10, 400)
 
 # build input layers
-features = []
-for i in range(len(feature_labels)):
-    features.append(tf.contrib.layers.real_valued_column(feature_labels))
+FEATURES = []
+for i in range(len(FEATURE_LABELS)):
+    FEATURES.append(tf.contrib.layers.real_valued_column(FEATURE_LABELS))
 
-target_label = ['MKPRU']
+TARGET_LABEL = ['MKPRU']
 
 # building input function
 
 
 def input_fn_train():
+    """
+        Build Input function
+        Using tf.constant to build feature and target value
+    """
     # returns x, y
-    f = {
+    features_tf = {
         k: tf.constant(
-            preprocessing.normalize(data[k].values), shape=[data[k].size, 1])
-        for k in feature_labels
+            preprocessing.normalize(DATA[k].values), shape=[DATA[k].size, 1])
+        for k in FEATURE_LABELS
     }
     target = tf.constant(
-        preprocessing.normalize(rawdata[STARTS_AT:][target_label].values),
-        shape=[rawdata[STARTS_AT:][target_label].size, 1])
-    return f, target
+        preprocessing.normalize(RAW_DATA[STARTS_AT:][TARGET_LABEL].values),
+        shape=[RAW_DATA[STARTS_AT:][TARGET_LABEL].size, 1])
+    return features_tf, target
 
 
 # building eval function
 
 
 def input_fn_eval():
+    """
+        input_fn_eval, a function to build eval function
+    """
     pass
 
 
-# building models
-
-estimator = tf.contrib.learn.DNNRegressor(
-    feature_columns=features,
+# Building models
+# tf dnn regressor is used
+# TODO: consider RNN model?
+ESTIMATOR = tf.contrib.learn.DNNRegressor(
+    feature_columns=FEATURES,
     hidden_units=[256, 128, 64]
-#    ,optimizer=tf.train.ProximalAdagradOptimizer(
-#        learning_rate=0.001, l1_regularization_strength=0.001)
+    #    ,optimizer=tf.train.ProximalAdagradOptimizer(
+    #        learning_rate=0.001, l1_regularization_strength=0.001)
 )
 
 # train model
-estimator.fit(input_fn=input_fn_train)
-estimator.evaluate(input_fun=input_fn_eval)
+ESTIMATOR.fit(input_fn=input_fn_train)
+ESTIMATOR.evaluate(input_fun=input_fn_eval)

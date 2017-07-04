@@ -11,10 +11,11 @@ RAW_DATA = pd.read_csv('cleaned_data.csv')
 ## extracted_data = tf.contrib.learn.extract_pandas_data(data.iloc[:,1:])
 ## define raw labels, from which function will generate feature labels
 RAW_LABELS = [
-    'DIFF', 'TRFEE', 'MKTCP', 'TOTBC', 'MWNUS', 'MWNTD', 'MWTRV', 'AVBLS',
-    'BLCHS', 'ATRCT', 'MIREV', 'HRATE', 'CPTRA', 'CPTRV', 'TRVOU', 'TOUTV',
-    'ETRVU', 'ETRAV', 'NTRBL', 'NADDU', 'NTREP', 'NTRAT', 'NTRAN'
-]
+    'DIFF', 'TRFEE']
+#, 'MKTCP', 'TOTBC', 'MWNUS', 'MWNTD', 'MWTRV', 'AVBLS',
+#    'BLCHS', 'ATRCT', 'MIREV', 'HRATE', 'CPTRA', 'CPTRV', 'TRVOU', 'TOUTV',
+#    'ETRVU', 'ETRAV', 'NTRBL', 'NADDU', 'NTREP', 'NTRAT', 'NTRAN'
+#]
 ## Define how much rows should be skipped
 ## Because at the initial year of bitcoin, there weren't any $-BTC data.
 ## So it should be skipped
@@ -33,7 +34,7 @@ def gen_days_back(data, labels, days, starts_at):
             gen_labels.append(label + '_' + str(j + 1))
     for k in range(starts_at, data.shape[0]):
         days_back_data = data[k - days:k]
-        selected_day_back_data = days_back_data.loc[:, 'DIFF':'NTRAN']
+        selected_day_back_data = days_back_data.loc[:, 'DIFF':'TRFEE']
         selected_day_back_data_np = selected_day_back_data.values
         reshaped = np.reshape(selected_day_back_data_np.T,
                               (1, len(labels) * days))
@@ -43,12 +44,12 @@ def gen_days_back(data, labels, days, starts_at):
     return dataframe, gen_labels
 
 ## Building the data by calling the gen_days_back function
-GEN_DATA, GEN_FEATURE_LABELS = gen_days_back(RAW_DATA, RAW_LABELS, 10, 400)
+GEN_DATA, GEN_FEATURE_LABELS = gen_days_back(RAW_DATA, RAW_LABELS, 1, 400)
 
 # build input layers
 FEATURES = []
-for i in range(len(GEN_FEATURE_LABELS)):
-    FEATURES.append(tf.contrib.layers.real_valued_column(GEN_FEATURE_LABELS))
+for label in GEN_FEATURE_LABELS:
+    FEATURES.append(tf.contrib.layers.real_valued_column(label))
 
 TARGET_LABEL = ['MKPRU']
 
@@ -62,8 +63,7 @@ def input_fn_train():
     """
     # returns x, y
     features_tf = {
-        k: tf.constant(
-            preprocessing.normalize(GEN_DATA[k].values), shape=[GEN_DATA[k].size, 1])
+        k: tf.constant(GEN_DATA[k].values)
         for k in GEN_FEATURE_LABELS
     }
     target = tf.constant(

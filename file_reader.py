@@ -158,7 +158,7 @@ ESTIMATOR = tf.contrib.learn.DNNRegressor(
     feature_columns=FEATURES,
     hidden_units=[256, 128, 64],
     config=tf.contrib.learn.RunConfig(save_checkpoints_secs=30),
-    model_dir='/tmp/turtle_model',
+    model_dir='~/Desktop/turtle_model_17_07_06',
     dropout=0.01
     #optimizer=tf.train.ProximalAdagradOptimizer(
     #    learning_rate=0.05, l1_regularization_strength=0.1)

@@ -100,8 +100,22 @@ TARGET_SCALER = SCALER.fit(TARGET_DATA_TRAIN)
 # SCALED_GEN_DATA_NP_ARRAY = SCALED_GEN_DATA.values
 # SCALED_TARGET_DATA_NP_ARRAY = SCALED_TARGET_DATA.values
 
-
 # building input function
+def input_fn(feature, target):
+    """
+        Build Input function
+        Using tf.constant to build feature and target value
+    """
+    # returns x, y
+    features_tf = {
+        k: tf.constant(FEATURE_SCALER.fit_transform(feature[k]))
+        for k in GEN_FEATURE_LABELS
+    }
+    target_tf = tf.constant(TARGET_SCALER.fit_transform(target))
+    # shape=[RAW_DATA_TRAIN[STARTS_AT:][TARGET_LABEL].size, 1])
+    return features_tf, target_tf
+
+
 def input_fn_train():
     """
         Build Input function

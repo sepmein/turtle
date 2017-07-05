@@ -1,3 +1,6 @@
+"""
+    Generate training, cross validation and test data for the project
+"""
 import numpy as np
 import pandas as pd
 RAW_DATA = pd.read_csv('cleaned_data.csv')
@@ -15,6 +18,6 @@ RAW_DATA_TRAIN = RAW_DATA[MASK_TRAIN]
 RAW_DATA_CROSS_VALIDATION = RAW_DATA[MASK_CROSS_VALIDATION]
 RAW_DATA_TEST = RAW_DATA[MASK_TEST]
 # save three parts of data
-RAW_DATA_TRAIN.to_csv('raw_data_TRAIN.csv')
-RAW_DATA_CROSS_VALIDATION.to_csv('raw_data_CROSS_VALIDATION.csv')
-RAW_DATA_TEST.to_csv('raw_data_TEST.csv')
+RAW_DATA_TRAIN.to_csv('raw_data_train.csv')
+RAW_DATA_CROSS_VALIDATION.to_csv('raw_data_cross_validation.csv')
+RAW_DATA_TEST.to_csv('raw_data_test.csv')

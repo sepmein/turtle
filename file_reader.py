@@ -1,33 +1,41 @@
 """
 Read data from csv
-TODO: inverse-scale data, get the params of the scaler
-TODO: split data in to three parts: training, validation and test
 """
+# TODO: inverse-scale data, get the params of the scaler
+# TODO: split data in to three parts: training, validation and test
+
 import pandas as pd
 import tensorflow as tf
 import numpy as np
 from sklearn import preprocessing
 
-## read data from pre-downloaded csv file
-RAW_DATA = pd.read_csv('cleaned_data.csv')
-## extracted_data = tf.contrib.learn.extract_pandas_data(data.iloc[:,1:])
-## define raw labels, from which function will generate feature labels
+# read data from csv file
+RAW_DATA_TRAIN = pd.read_csv('raw_data_train.csv')
+RAW_DATA_CROSS_VALIDATION = pd.read_csv('raw_data_cross_validation.csv')
+RAW_DATA_TEST = pd.read_csv('raw_data_test.csv')
+# extracted_data = tf.contrib.learn.extract_pandas_data(data.iloc[:,1:])
+# Define how much rows should be skipped
+# Because at the initial year of bitcoin, there weren't any $-BTC data.
+# So it should be skipped
+STARTS_AT = 50
+# Convert date string to pandas datetime format
+RAW_DATA_TRAIN['Date'] = pd.to_datetime(RAW_DATA_TRAIN['Date'])
+RAW_DATA_CROSS_VALIDATION['Date'] = pd.to_datetime(RAW_DATA_CROSS_VALIDATION['Date'])
+RAW_DATA_TEST['Date'] = pd.to_datetime(RAW_DATA_TEST['Date'])
+
+# Define target label
+TARGET_LABEL = ['MKPRU']
+
+# Define raw labels, from which function will generate feature labels
 RAW_LABELS = [
-    'DIFF', 'TRFEE'
-, 'MKTCP', 'TOTBC', 'MWNUS', 'MWNTD', 'MWTRV', 'AVBLS',
+    'DIFF', 'TRFEE', 'MKTCP', 'TOTBC', 'MWNUS', 'MWNTD', 'MWTRV', 'AVBLS',
     'BLCHS', 'ATRCT', 'MIREV', 'HRATE', 'CPTRA', 'CPTRV', 'TRVOU', 'TOUTV',
     'ETRVU', 'ETRAV', 'NTRBL', 'NADDU', 'NTREP', 'NTRAT', 'NTRAN'
 ]
-## Define how much rows should be skipped
-## Because at the initial year of bitcoin, there weren't any $-BTC data.
-## So it should be skipped
-STARTS_AT = 400
-## convert date string to pandas datetime format
-RAW_DATA['Date'] = pd.to_datetime(RAW_DATA['Date'])
-
 
 def gen_days_back(data, labels, days, starts_at):
-    """generate data by days back
+    """
+        generate data by days back
     """
     gen_labels = []
     gen_data = []
@@ -45,15 +53,37 @@ def gen_days_back(data, labels, days, starts_at):
     dataframe = pd.DataFrame(data=stacked, columns=gen_labels)
     return dataframe, gen_labels
 
-## Building the data by calling the gen_days_back function
-GEN_DATA, GEN_FEATURE_LABELS = gen_days_back(RAW_DATA, RAW_LABELS, 1, 400)
+# Building the data by calling the gen_days_back function
+GEN_DATA_TRAIN, GEN_FEATURE_LABELS = gen_days_back(RAW_DATA_TRAIN, RAW_LABELS, 10, STARTS_AT)
+GEN_DATA_CROSS_VALIDATION = gen_days_back(RAW_DATA_CROSS_VALIDATION, RAW_LABELS, 10, STARTS_AT)
+
+# Generate target data
+def gen_target_data(data, label, starts_at):
+    """
+        generate raw target data
+    """
+    result = data[starts_at:][label].values
+    return result
+
+TARGET_DATA_TRAIN = gen_target_data(data=RAW_DATA_TRAIN, label=TARGET_LABEL, starts_at=STARTS_AT)
+TARGET_DATA_CROSS_VALIDATION = gen_target_data(data=RAW_DATA_CROSS_VALIDATION, label=TARGET_LABEL, starts_at=STARTS_AT)
 
 # build input layers
 FEATURES = []
-for label in GEN_FEATURE_LABELS:
-    FEATURES.append(tf.contrib.layers.real_valued_column(label))
+for gen_feature_label in GEN_FEATURE_LABELS:
+    FEATURES.append(tf.contrib.layers.real_valued_column(gen_feature_label))
 
-TARGET_LABEL = ['MKPRU']
+
+# Data scaler
+SCALER = preprocessing.StandardScaler()
+FEATURE_SCALER = SCALER.fit(GEN_DATA_TRAIN)
+# SCALED_GEN_DATA = FEATURE_SCALER.fit_transform(GEN_DATA_TRAIN)
+TARGET_SCALER = SCALER.fit(TARGET_DATA_TRAIN)
+# SCALED_TARGET_DATA = TARGET_SCALER.fit_transform(TARGET_DATA_TRAIN)
+
+# Get numpy array from pandas dataframe
+# SCALED_GEN_DATA_NP_ARRAY = SCALED_GEN_DATA.values
+# SCALED_TARGET_DATA_NP_ARRAY = SCALED_TARGET_DATA.values
 
 # building input function
 
@@ -66,14 +96,14 @@ def input_fn_train():
     # returns x, y
     features_tf = {
         k: tf.constant(
-            preprocessing.scale(GEN_DATA[k].values)
-            )
+            FEATURE_SCALER.fit_transform(GEN_DATA_TRAIN[k])
+        )
         for k in GEN_FEATURE_LABELS
     }
     target_tf = tf.constant(
-        preprocessing.scale(RAW_DATA[STARTS_AT:][TARGET_LABEL].values)
-        )
-        #shape=[RAW_DATA[STARTS_AT:][TARGET_LABEL].size, 1])
+        TARGET_SCALER.fit_transform(TARGET_DATA_TRAIN)
+    )
+    # shape=[RAW_DATA_TRAIN[STARTS_AT:][TARGET_LABEL].size, 1])
     return features_tf, target_tf
 
 
@@ -83,7 +113,17 @@ def input_fn_eval():
     """
         input_fn_eval, a function to build eval function
     """
-    pass
+    features_tf = {
+        k: tf.constant(
+            FEATURE_SCALER.fit_transform(GEN_DATA_CROSS_VALIDATION[k])
+        )
+        for k in GEN_FEATURE_LABELS
+    }
+    target_tf = tf.constant(
+        TARGET_SCALER.fit_transform(TARGET_DATA_CROSS_VALIDATION)
+    )
+    # shape=[RAW_DATA_TRAIN[STARTS_AT:][TARGET_LABEL].size, 1])
+    return features_tf, target_tf
 
 
 # Building models
@@ -91,7 +131,7 @@ def input_fn_eval():
 # TODO: consider RNN model?
 ESTIMATOR = tf.contrib.learn.DNNRegressor(
     feature_columns=FEATURES,
-    hidden_units=[256,128]
+    hidden_units=[256, 128, 64]
     #    ,optimizer=tf.train.ProximalAdagradOptimizer(
     #        learning_rate=0.001, l1_regularization_strength=0.001)
 )

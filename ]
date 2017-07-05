@@ -134,8 +134,10 @@ def input_fn_eval():
 
 
 # Added a layer of validation monitor
-validation_monitor = tf.contrib.learn.monitors.ValidationMonitor(
-    input_fn=input_fn_eval, every_n_steps=100, eval_steps=1)
+# validation_monitor = tf.contrib.learn.monitors.ValidationMonitor(
+#            input_fn=input_fn_eval,
+#            every_n_steps=100
+#        )
 
 # Building models
 # tf dnn regressor is used
@@ -143,16 +145,18 @@ validation_monitor = tf.contrib.learn.monitors.ValidationMonitor(
 ESTIMATOR = tf.contrib.learn.DNNRegressor(
     feature_columns=FEATURES,
     hidden_units=[256, 128, 64],
-    config=tf.contrib.learn.RunConfig(save_checkpoints_secs=30),
-    model_dir='/tmp/turtle_model',
-    dropout=0.01
-    #optimizer=tf.train.ProximalAdagradOptimizer(
-    #    learning_rate=0.05, l1_regularization_strength=0.1)
-    )
+    #    config=tf.contrib.learn.RunConfig(save_checkpoints_secs=60),
+    model_dir='/tmp/turtle_model'
+    #    ,optimizer=tf.train.ProximalAdagradOptimizer(
+    #        learning_rate=0.001, l1_regularization_strength=0.001)
+)
 
 # Fit train model
 ESTIMATOR.fit(
-    input_fn=input_fn_train, monitors=[validation_monitor], steps=100000)
+    input_fn=input_fn_train
+    #        ,monitors=[validation_monitor]
+    ,
+    steps=100)
 
 # Cross validate data
-ESTIMATOR.evaluate(input_fn=input_fn_eval, steps=1)
+ESTIMATOR.evaluate(input_fn=input_fn_eval)

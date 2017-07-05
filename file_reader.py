@@ -1,5 +1,7 @@
 """
 Read data from csv
+TODO: inverse-scale data, get the params of the scaler
+TODO: split data in to three parts: training, validation and test
 """
 import pandas as pd
 import tensorflow as tf
@@ -11,11 +13,11 @@ RAW_DATA = pd.read_csv('cleaned_data.csv')
 ## extracted_data = tf.contrib.learn.extract_pandas_data(data.iloc[:,1:])
 ## define raw labels, from which function will generate feature labels
 RAW_LABELS = [
-    'DIFF', 'TRFEE']
-#, 'MKTCP', 'TOTBC', 'MWNUS', 'MWNTD', 'MWTRV', 'AVBLS',
-#    'BLCHS', 'ATRCT', 'MIREV', 'HRATE', 'CPTRA', 'CPTRV', 'TRVOU', 'TOUTV',
-#    'ETRVU', 'ETRAV', 'NTRBL', 'NADDU', 'NTREP', 'NTRAT', 'NTRAN'
-#]
+    'DIFF', 'TRFEE'
+, 'MKTCP', 'TOTBC', 'MWNUS', 'MWNTD', 'MWTRV', 'AVBLS',
+    'BLCHS', 'ATRCT', 'MIREV', 'HRATE', 'CPTRA', 'CPTRV', 'TRVOU', 'TOUTV',
+    'ETRVU', 'ETRAV', 'NTRBL', 'NADDU', 'NTREP', 'NTRAT', 'NTRAN'
+]
 ## Define how much rows should be skipped
 ## Because at the initial year of bitcoin, there weren't any $-BTC data.
 ## So it should be skipped
@@ -34,7 +36,7 @@ def gen_days_back(data, labels, days, starts_at):
             gen_labels.append(label + '_' + str(j + 1))
     for k in range(starts_at, data.shape[0]):
         days_back_data = data[k - days:k]
-        selected_day_back_data = days_back_data.loc[:, 'DIFF':'TRFEE']
+        selected_day_back_data = days_back_data.loc[:, 'DIFF':'NTRAN']
         selected_day_back_data_np = selected_day_back_data.values
         reshaped = np.reshape(selected_day_back_data_np.T,
                               (1, len(labels) * days))
@@ -63,18 +65,19 @@ def input_fn_train():
     """
     # returns x, y
     features_tf = {
-        k: tf.constant(GEN_DATA[k].values)
+        k: tf.constant(
+            preprocessing.scale(GEN_DATA[k].values)
+            )
         for k in GEN_FEATURE_LABELS
     }
-    target = tf.constant(
-        RAW_DATA[STARTS_AT:][TARGET_LABEL].values,
-        #preprocessing.normalize(RAW_DATA[STARTS_AT:][TARGET_LABEL].values),
-        shape=[RAW_DATA[STARTS_AT:][TARGET_LABEL].size, 1])
-    return features_tf, target
+    target_tf = tf.constant(
+        preprocessing.scale(RAW_DATA[STARTS_AT:][TARGET_LABEL].values)
+        )
+        #shape=[RAW_DATA[STARTS_AT:][TARGET_LABEL].size, 1])
+    return features_tf, target_tf
 
 
 # building eval function
-
 
 def input_fn_eval():
     """
@@ -88,7 +91,7 @@ def input_fn_eval():
 # TODO: consider RNN model?
 ESTIMATOR = tf.contrib.learn.DNNRegressor(
     feature_columns=FEATURES,
-    hidden_units=[256, 128, 64]
+    hidden_units=[256,128]
     #    ,optimizer=tf.train.ProximalAdagradOptimizer(
     #        learning_rate=0.001, l1_regularization_strength=0.001)
 )

@@ -121,6 +121,7 @@ ESTIMATOR = tf.contrib.learn.DNNRegressor(
     feature_columns=FEATURES,
     hidden_units=[256, 128, 64],
     config=tf.contrib.learn.RunConfig(save_checkpoints_secs=30),
+    model_dir='/home/sepmein/Desktop/turtle-model-1',
     dropout=0.01
     # optimizer=tf.train.ProximalAdagradOptimizer(
     #    learning_rate=0.05, l1_regularization_strength=0.1)
@@ -130,7 +131,7 @@ ESTIMATOR = tf.contrib.learn.DNNRegressor(
 ESTIMATOR.fit(
     input_fn=input_fn_train,
     monitors=[validation_monitor],
-    steps=100000
+    steps=41800
 )
 
 # Cross validate data

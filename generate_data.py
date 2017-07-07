@@ -25,7 +25,7 @@ TEST_RATIO = 0.1
 # Define how much rows should be skipped
 # Because at the initial year of bitcoin, there weren't any $-BTC data.
 # So it should be skipped
-STARTS_AT = 200
+STARTS_AT = 590
 
 # Convert data string to pandas datatime format
 RAW_DATA['Date'] = pd.to_datetime(RAW_DATA['Date'])
@@ -57,7 +57,7 @@ def gen_days_back(data, labels, days, starts_at):
 gen_feature_data, gen_labels = gen_days_back(
     data=RAW_DATA,
     labels=RAW_LABELS,
-    days=10,
+    days=50,
     starts_at=STARTS_AT
 )
 

@@ -1,5 +1,5 @@
 """
-Read data from csv
+    Fully Connectted DNN regressor
 """
 # TODO: inverse-scale data, get the params of the scaler
 # TODO: split data in to three parts: training, validation and test
@@ -40,15 +40,21 @@ def gen_feature_labels(labels, days):
     return gen_labels
 
 # Generate feature labels
-GEN_FEATURE_LABELS = gen_feature_labels(RAW_LABELS, 10)
+GEN_FEATURE_LABELS = gen_feature_labels(RAW_LABELS, 50)
 
 # read data from csv file
-gen_feature_data_training = pd.read_csv('gen_feature_data_training.csv').loc[:,'DIFF_1':]
-gen_feature_data_cv = pd.read_csv('gen_feature_data_cv.csv').loc[:,'DIFF_1':]
-gen_feature_data_test = pd.read_csv('gen_feature_data_test.csv').loc[:,'DIFF_1':]
-gen_target_data_training = pd.read_csv('gen_target_data_training.csv').loc[:,'MKPRU']
-gen_target_data_cv = pd.read_csv('gen_target_data_cv.csv').loc[:,'MKPRU']
-gen_target_data_test = pd.read_csv('gen_target_data_test.csv').loc[:,'MKPRU']
+gen_feature_data_training = pd.read_csv(
+    'gen_feature_data_training.csv').loc[:, 'DIFF_1':]
+gen_feature_data_cv = pd.read_csv(
+    'gen_feature_data_cv.csv').loc[:, 'DIFF_1':]
+gen_feature_data_test = pd.read_csv(
+    'gen_feature_data_test.csv').loc[:, 'DIFF_1':]
+gen_target_data_training = pd.read_csv(
+    'gen_target_data_training.csv').loc[:, 'MKPRU']
+gen_target_data_cv = pd.read_csv(
+    'gen_target_data_cv.csv').loc[:, 'MKPRU']
+gen_target_data_test = pd.read_csv(
+    'gen_target_data_test.csv').loc[:, 'MKPRU']
 
 # build tensorflow input layers
 FEATURES = []
@@ -67,7 +73,9 @@ def input_fn(feature, target):
         Using tf.constant to build feature and target value
     """
     features_tf = {
-        k: tf.constant(FEATURE_SCALER.fit_transform(feature[k]))
+        k: tf.constant(
+            FEATURE_SCALER.fit_transform(feature[k]),
+            shape=[feature[k].size, 1])
         for k in GEN_FEATURE_LABELS
     }
     target_tf = tf.constant(TARGET_SCALER.fit_transform(target))
@@ -107,10 +115,22 @@ def input_fn_test():
     )
     return features_tf, target_tf
 
+
+def input_fn_predict():
+    """
+        Function for prediction
+    """
+    features_tf, target_tf = input_fn(
+        feature=gen_feature_data_test,
+        target=gen_target_data_test
+    )
+    return features_tf
+
+
 # Added a layer of validation monitor
 validation_monitor = tf.contrib.learn.monitors.ValidationMonitor(
     input_fn=input_fn_eval,
-    every_n_steps=100,
+    every_n_steps=200,
     eval_steps=1
 )
 
@@ -119,10 +139,10 @@ validation_monitor = tf.contrib.learn.monitors.ValidationMonitor(
 # TODO: consider RNN model?
 ESTIMATOR = tf.contrib.learn.DNNRegressor(
     feature_columns=FEATURES,
-    hidden_units=[256, 128, 64],
-    config=tf.contrib.learn.RunConfig(save_checkpoints_secs=30),
-    dropout=0.01,
-    model_dir='~/model/turtle'
+    hidden_units=[512, 256, 128],
+    config=tf.contrib.learn.RunConfig(save_checkpoints_secs=300),
+    model_dir="/Users/Spencer/Desktop/turtle-model-50",
+    dropout=0.01
     # optimizer=tf.train.ProximalAdagradOptimizer(
     #    learning_rate=0.05, l1_regularization_strength=0.1)
 )

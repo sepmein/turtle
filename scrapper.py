@@ -84,7 +84,8 @@ def scrap(date='today'):
         date = date
 
     # get the date of today if need
-
+    result = []
+    result.append(quandl.get(k) for k in LABELS)
     # define the labels to be scraped
 
     # scrap the data 50 days back

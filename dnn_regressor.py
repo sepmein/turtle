@@ -165,3 +165,9 @@ ESTIMATOR.evaluate(
     input_fn=input_fn_test,
     steps=1
 )
+
+def get_estimator():
+    return ESTIMATOR
+
+def get_scaler():
+    return FEATURE_SCALER, TARGET_SCALER

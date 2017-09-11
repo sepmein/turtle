@@ -1,5 +1,5 @@
 """
-    Fully Connectted DNN regressor
+    Fully Connected DNN regressor
 """
 # TODO: inverse-scale data, get the params of the scaler
 # TODO: split data in to three parts: training, validation and test
@@ -39,6 +39,7 @@ def gen_feature_labels(labels, days):
             gen_labels.append(label + '_' + str(j + 1))
     return gen_labels
 
+
 # Generate feature labels
 GEN_FEATURE_LABELS = gen_feature_labels(RAW_LABELS, 50)
 
@@ -64,7 +65,7 @@ for gen_feature_label in GEN_FEATURE_LABELS:
 # Data scaler
 SCALER = preprocessing.StandardScaler()
 FEATURE_SCALER = SCALER.fit(gen_feature_data_training)
-TARGET_SCALER = SCALER.fit(gen_target_data_training)
+TARGET_SCALER = SCALER.fit(gen_target_data_training.values.reshape(-1, 1))
 
 
 def input_fn(feature, target):
@@ -74,11 +75,11 @@ def input_fn(feature, target):
     """
     features_tf = {
         k: tf.constant(
-            FEATURE_SCALER.fit_transform(feature[k]),
+            FEATURE_SCALER.fit_transform(feature[k].values.reshape(-1, 1)),
             shape=[feature[k].size, 1])
         for k in GEN_FEATURE_LABELS
     }
-    target_tf = tf.constant(TARGET_SCALER.fit_transform(target))
+    target_tf = tf.constant(TARGET_SCALER.fit_transform(target.values.reshape(-1, 1)))
     return features_tf, target_tf
 
 
@@ -139,20 +140,19 @@ validation_monitor = tf.contrib.learn.monitors.ValidationMonitor(
 # TODO: consider RNN model?
 ESTIMATOR = tf.contrib.learn.DNNRegressor(
     feature_columns=FEATURES,
-    hidden_units=[512, 256, 128],
-    config=tf.contrib.learn.RunConfig(save_checkpoints_secs=300),
-    model_dir="C:\\Users\\Sepmein\\Desktop\\turtle-model-50",
-    dropout=0.01
+    hidden_units=[64, 64, 64, 32, 32, 32, 16, 16, 16, 8, 8, 8, 4, 4, 4, 2],
+    config=tf.contrib.learn.RunConfig(save_checkpoints_secs=60),
+    model_dir="C:\\Users\\sepmein\\OneDrive\\models"
     # optimizer=tf.train.ProximalAdagradOptimizer(
     #    learning_rate=0.05, l1_regularization_strength=0.1)
 )
 
 # Fit train model
-ESTIMATOR.fit(
-    input_fn=input_fn_train,
-    monitors=[validation_monitor],
-    steps=100000
-)
+# ESTIMATOR.fit(
+#     input_fn=input_fn_train,
+#     monitors=[validation_monitor],
+#     steps=100000
+# )
 
 # Cross validate data
 ESTIMATOR.evaluate(
@@ -165,3 +165,18 @@ ESTIMATOR.evaluate(
     input_fn=input_fn_test,
     steps=1
 )
+
+predictions_raw = list(ESTIMATOR.predict(input_fn=input_fn_test))
+
+predictions = TARGET_SCALER.inverse_transform(predictions_raw)
+print(predictions)
+
+predictions_data_frame = pd.DataFrame(predictions)
+predictions.to_csv('predictions.csv')
+
+def get_estimator():
+    return ESTIMATOR
+
+
+def get_scaler():
+    return FEATURE_SCALER, TARGET_SCALER

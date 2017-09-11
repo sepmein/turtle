@@ -1,5 +1,5 @@
 """
-    Fully Connectted DNN regressor
+    Fully Connected DNN regressor
 """
 # TODO: inverse-scale data, get the params of the scaler
 # TODO: split data in to three parts: training, validation and test
@@ -39,6 +39,7 @@ def gen_feature_labels(labels, days):
             gen_labels.append(label + '_' + str(j + 1))
     return gen_labels
 
+
 # Generate feature labels
 GEN_FEATURE_LABELS = gen_feature_labels(RAW_LABELS, 50)
 
@@ -74,11 +75,11 @@ def input_fn(feature, target):
     """
     features_tf = {
         k: tf.constant(
-            FEATURE_SCALER.fit_transform(feature[k]),
+            FEATURE_SCALER.fit_transform(feature[k].values),
             shape=[feature[k].size, 1])
         for k in GEN_FEATURE_LABELS
     }
-    target_tf = tf.constant(TARGET_SCALER.fit_transform(target))
+    target_tf = tf.constant(TARGET_SCALER.fit_transform(target.values))
     return features_tf, target_tf
 
 
@@ -139,10 +140,9 @@ validation_monitor = tf.contrib.learn.monitors.ValidationMonitor(
 # TODO: consider RNN model?
 ESTIMATOR = tf.contrib.learn.DNNRegressor(
     feature_columns=FEATURES,
-    hidden_units=[512, 256, 128],
-    config=tf.contrib.learn.RunConfig(save_checkpoints_secs=300),
-    model_dir="/Users/Spencer/Desktop/turtle-model-50",
-    dropout=0.01
+    hidden_units=[64, 64, 64, 32, 32, 32, 16, 16, 16, 8, 8, 8, 4, 4, 4, 2],
+    config=tf.contrib.learn.RunConfig(save_checkpoints_secs=60),
+    model_dir="D:\OneDrive\models"
     # optimizer=tf.train.ProximalAdagradOptimizer(
     #    learning_rate=0.05, l1_regularization_strength=0.1)
 )
@@ -166,8 +166,10 @@ ESTIMATOR.evaluate(
     steps=1
 )
 
+
 def get_estimator():
     return ESTIMATOR
+
 
 def get_scaler():
     return FEATURE_SCALER, TARGET_SCALER

@@ -11,7 +11,6 @@
 
 import pandas as pd
 import tensorflow as tf
-import numpy as np
 from sklearn import preprocessing
 
 # Setting logging verbosity
@@ -138,35 +137,34 @@ validation_monitor = tf.contrib.learn.monitors.ValidationMonitor(
 # Building models
 # tf dnn regressor is used
 # TODO: consider RNN model?
-ESTIMATOR = tf.contrib.learn.DNNRegressor(
+regressor = tf.estimator.DNNRegressor(
     feature_columns=FEATURES,
     hidden_units=[64, 64, 64, 32, 32, 32, 16, 16, 16, 8, 8, 8, 4, 4, 4, 2],
-    config=tf.contrib.learn.RunConfig(save_checkpoints_secs=60),
-    model_dir="C:\\Users\\sepmein\\OneDrive\\models"
+    model_dir="C:\\Users\\sepmein\\OneDrive\\models\\171009",
+    optimizer=tf.train.AdamOptimizer()
     # optimizer=tf.train.ProximalAdagradOptimizer(
     #    learning_rate=0.05, l1_regularization_strength=0.1)
 )
 
 # Fit train model
-# ESTIMATOR.fit(
+# regressor.train(
 #     input_fn=input_fn_train,
-#     monitors=[validation_monitor],
-#     steps=100000
+#     steps=1000
 # )
 
-# Cross validate data
-ESTIMATOR.evaluate(
-    input_fn=input_fn_eval,
-    steps=1
-)
+# # Cross validate data
+# regressor.evaluate(
+#     input_fn=input_fn_eval,
+#     steps=1
+# )
+#
+# # Test and predict
+# regressor.evaluate(
+#     input_fn=input_fn_test,
+#     steps=1
+# )
 
-# Test and predict
-ESTIMATOR.evaluate(
-    input_fn=input_fn_test,
-    steps=1
-)
-
-predictions_raw = list(ESTIMATOR.predict(input_fn=input_fn_test))
+predictions_raw = list(regressor.predict(input_fn=input_fn_test))
 
 predictions = TARGET_SCALER.inverse_transform(predictions_raw)
 print(predictions)
@@ -175,7 +173,7 @@ predictions_data_frame = pd.DataFrame(predictions)
 predictions.to_csv('predictions.csv')
 
 def get_estimator():
-    return ESTIMATOR
+    return regressor
 
 
 def get_scaler():

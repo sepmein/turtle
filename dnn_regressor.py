@@ -16,45 +16,6 @@ from sklearn import preprocessing
 # Setting logging verbosity
 tf.logging.set_verbosity(tf.logging.INFO)
 
-# Define target label
-TARGET_LABEL = ['MKPRU']
-
-# Define raw labels, from which function will generate feature labels
-RAW_LABELS = [
-    'DIFF', 'TRFEE', 'MKTCP', 'TOTBC', 'MWNUS', 'MWNTD', 'MWTRV', 'AVBLS',
-    'BLCHS', 'ATRCT', 'MIREV', 'HRATE', 'CPTRA', 'CPTRV', 'TRVOU', 'TOUTV',
-    'ETRVU', 'ETRAV', 'NTRBL', 'NADDU', 'NTREP', 'NTRAT', 'NTRAN'
-]
-
-
-def gen_feature_labels(labels, days):
-    """
-        generate data by days back
-        using "days" back data to predict BTC_USD value
-    """
-    gen_labels = []
-    for label in labels:
-        for j in range(days):
-            gen_labels.append(label + '_' + str(j + 1))
-    return gen_labels
-
-
-# Generate feature labels
-GEN_FEATURE_LABELS = gen_feature_labels(RAW_LABELS, 50)
-
-# read data from csv file
-gen_feature_data_training = pd.read_csv(
-    'gen_feature_data_training.csv').loc[:, 'DIFF_1':]
-gen_feature_data_cv = pd.read_csv(
-    'gen_feature_data_cv.csv').loc[:, 'DIFF_1':]
-gen_feature_data_test = pd.read_csv(
-    'gen_feature_data_test.csv').loc[:, 'DIFF_1':]
-gen_target_data_training = pd.read_csv(
-    'gen_target_data_training.csv').loc[:, 'MKPRU']
-gen_target_data_cv = pd.read_csv(
-    'gen_target_data_cv.csv').loc[:, 'MKPRU']
-gen_target_data_test = pd.read_csv(
-    'gen_target_data_test.csv').loc[:, 'MKPRU']
 
 # build tensorflow input layers
 FEATURES = []
@@ -140,23 +101,23 @@ validation_monitor = tf.contrib.learn.monitors.ValidationMonitor(
 regressor = tf.estimator.DNNRegressor(
     feature_columns=FEATURES,
     hidden_units=[64, 64, 64, 32, 32, 32, 16, 16, 16, 8, 8, 8, 4, 4, 4, 2],
-    model_dir="C:\\Users\\sepmein\\OneDrive\\models\\171009",
-    optimizer=tf.train.AdamOptimizer()
-    # optimizer=tf.train.ProximalAdagradOptimizer(
+    model_dir="D:\\OneDrive\\models\\171010",
+    optimizer=tf.train.AdamOptimizer()    # optimizer=tf.train.ProximalAdagradOptimizer(
     #    learning_rate=0.05, l1_regularization_strength=0.1)
 )
 
 # Fit train model
-# regressor.train(
-#     input_fn=input_fn_train,
-#     steps=1000
-# )
+regressor.train(
+    input_fn=input_fn_train,
+    steps=10000
+)
 
 # # Cross validate data
-# regressor.evaluate(
-#     input_fn=input_fn_eval,
-#     steps=1
-# )
+regressor.evaluate(
+    input_fn=input_fn_eval,
+    steps=1
+)
+
 #
 # # Test and predict
 # regressor.evaluate(
@@ -164,13 +125,13 @@ regressor = tf.estimator.DNNRegressor(
 #     steps=1
 # )
 
-predictions_raw = list(regressor.predict(input_fn=input_fn_test))
-
-predictions = TARGET_SCALER.inverse_transform(predictions_raw)
-print(predictions)
-
-predictions_data_frame = pd.DataFrame(predictions)
-predictions.to_csv('predictions.csv')
+# predictions_raw = list(regressor.predict(input_fn=input_fn_test))
+#
+# predictions = TARGET_SCALER.inverse_transform(predictions_raw)
+# print(predictions)
+#
+# predictions_data_frame = pd.DataFrame(predictions)
+# predictions.to_csv('predictions.csv')
 
 def get_estimator():
     return regressor

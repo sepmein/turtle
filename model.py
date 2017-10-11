@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 # import data
-from data_importer import gen_target_data_training, gen_feature_data_training
+from data_importer import gen_target_data_training, gen_feature_data_training, gen_target_data_cv, gen_feature_data_cv
 
 # fake input_vector_shape
 input_vector_shape = [1869, 1150]
@@ -34,21 +34,21 @@ with tf.name_scope('parameters_initialize'):
 
 # training data
 with tf.name_scope('data_placeholder'):
-    x_train = tf.placeholder(
+    x = tf.placeholder(
         dtype=tf.float32,
         name='training_features',
-        shape=input_vector_shape
+        shape=[None, 1150]
     )
-    y_train = tf.placeholder(
+    y = tf.placeholder(
         dtype=tf.float32,
         name='training_targets',
-        shape=[input_vector_shape[0], 1]
+        shape=[None, 1]
     )
 
 with tf.name_scope('forward_propagation'):
     # Forward propagation
     # hypothesis
-    h_1 = tf.matmul(x_train, weights[0], transpose_b=True) + biases[0]
+    h_1 = tf.matmul(x, weights[0], transpose_b=True) + biases[0]
     # activation layer 1
     a_1 = tf.nn.relu(
         features=h_1,
@@ -63,7 +63,7 @@ with tf.name_scope('forward_propagation'):
     )
 
     # loss function
-    lambd = 0.01
+    lambd = 0.1
     normalization = lambd * (
         tf.reduce_sum(
             tf.nn.l2_normalize(
@@ -80,7 +80,12 @@ with tf.name_scope('forward_propagation'):
 
     )
     # Loss function
-    loss = tf.reduce_sum(tf.square(tf.abs(a_2 - y_train))) / (2 * input_vector_shape[0]) + normalization
+    m = x.get_shape().as_list()[0]
+    loss = tf.losses.mean_squared_error(
+        labels=a_2,
+        predictions=y
+    ) + normalization
+    # tf.reduce_sum(tf.square(tf.abs(a_2 - y))) / (2 * m) + normalization
 
 with tf.name_scope('models'):
     optimizer = tf.train.AdamOptimizer()
@@ -92,20 +97,25 @@ with tf.Session() as session:
         session.run(
             optimization,
             {
-                x_train: gen_feature_data_training,
-                y_train: gen_target_data_training
+                x: gen_feature_data_training,
+                y: gen_target_data_training
             }
         )
         if _ % 100 == 0:
             l = session.run(
                 loss,
                 {
-                    x_train: gen_feature_data_training,
-                    y_train: gen_target_data_training
+                    x: gen_feature_data_training,
+                    y: gen_target_data_training
                 }
-
             )
-            print("Epoch:", '%04d' % (_ + 1), "cost=", "{:.9f}".format(l))
+            l_cv = session.run(
+                loss,
+                {
+                    x: gen_feature_data_cv,
+                    y: gen_target_data_cv
+                })
+            print("Epoch:", '%04d' % (_ + 1), "cost=", "{:.9f}".format(l), "cv=", "{:.9f}".format(l_cv))
 # Model
 
 

@@ -75,3 +75,5 @@ TARGET_SCALER = SCALER.fit(gen_target_data_training.values.reshape(-1, 1))
 
 gen_feature_data_training = FEATURE_SCALER.fit_transform(gen_feature_data_training)
 gen_target_data_training = gen_target_data_training.values.reshape(-1, 1)
+gen_feature_data_cv = FEATURE_SCALER.fit_transform(gen_feature_data_cv)
+gen_target_data_cv = gen_target_data_cv.values.reshape(-1, 1)

@@ -66,3 +66,12 @@ test_data_input_fn = tf.estimator.inputs.pandas_input_fn(
     batch_size=128,
     shuffle=True
 )
+
+from sklearn import preprocessing
+
+SCALER = preprocessing.StandardScaler()
+FEATURE_SCALER = SCALER.fit(gen_feature_data_training)
+TARGET_SCALER = SCALER.fit(gen_target_data_training.values.reshape(-1, 1))
+
+gen_feature_data_training = FEATURE_SCALER.fit_transform(gen_feature_data_training)
+gen_target_data_training = gen_target_data_training.values.reshape(-1, 1)

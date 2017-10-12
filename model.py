@@ -8,7 +8,7 @@ input_vector_shape = [1869, 1150]
 
 # define model layers
 weight_dict = [
-    input_vector_shape[1], 128, 1
+    input_vector_shape[1], 128, 64, 1
 ]
 num_layers = len(weight_dict) - 1
 
@@ -62,6 +62,13 @@ with tf.name_scope('forward_propagation'):
         name='activation_layer_2'
     )
 
+    h_3 = tf.matmul(a_2, weights[2], transpose_b=True) + biases[2]
+    # activation layer 1
+    a_3 = tf.nn.relu(
+        features=h_3,
+        name='activation_layer_3'
+    )
+
     # loss function
     lambd = 0.1
     normalization = lambd * (
@@ -76,13 +83,19 @@ with tf.name_scope('forward_propagation'):
                 x=weights[1],
                 dim=[0, 1]
             )
+        ) +
+        tf.reduce_sum(
+            tf.nn.l2_normalize(
+                x=weights[2],
+                dim=[0, 1]
+            )
         )
 
     )
     # Loss function
     m = x.get_shape().as_list()[0]
     loss = tf.losses.mean_squared_error(
-        labels=a_2,
+        labels=a_3,
         predictions=y
     ) + normalization
     # tf.reduce_sum(tf.square(tf.abs(a_2 - y))) / (2 * m) + normalization

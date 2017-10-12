@@ -9,7 +9,7 @@ feature_labels = ["DIFF", "TRFEE", "MKTCP", "TOTBC", "MWNUS",
                   "MWNTD", "MWTRV", "AVBLS", "BLCHS", "ATRCT",
                   "MIREV", "HRATE", "CPTRA", "CPTRV", "TRVOU",
                   "TOUTV", "ETRVU", "ETRAV", "NTRBL", "NADDU",
-                  "NTREP", "NTRAT", "NTRAN"]
+                  "NTREP", "NTRAT", "NTRAN", "MKPRU"]
 
 # how many days back
 days = 50

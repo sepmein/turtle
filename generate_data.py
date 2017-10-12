@@ -7,25 +7,7 @@ import pandas as pd
 # read raw data
 RAW_DATA = pd.read_csv('./data/raw/data_071011.csv')
 
-# Define raw labels, from which function will generate feature labels
-feature_labels = ["DIFF", "TRFEE", "MKTCP", "TOTBC", "MWNUS",
-                  "MWNTD", "MWTRV", "AVBLS", "BLCHS", "ATRCT",
-                  "MIREV", "HRATE", "CPTRA", "CPTRV", "TRVOU",
-                  "TOUTV", "ETRVU", "ETRAV", "NTRBL", "NADDU",
-                  "NTREP", "NTRAT", "NTRAN"]
 
-# Define target label
-target_label = ['MKPRU']
-
-# Define machine learning ratio
-TRAINING_RATIO = 0.7
-CROSS_VALIDATION_RATIO = 0.2
-TEST_RATIO = 0.1
-
-# Define how much rows should be skipped
-# Because at the initial year of bitcoin, there weren't any $-BTC data.
-# So it should be skipped
-STARTS_AT = 500
 
 # Convert data string to pandas datatime format
 RAW_DATA['Date'] = pd.to_datetime(RAW_DATA['Date'])

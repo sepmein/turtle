@@ -2,26 +2,25 @@
     Scrap quandl for the bitcoin data
 """
 
+from datetime import datetime
+
+import pandas as pd
 # imports
 import quandl
-import numpy as np
-import tensorflow as tf
-import pandas as pd
-from datetime import datetime
 
 # api key
 quandl.ApiConfig.api_key = "6ywQ69kRqt26zAsHkFDP"
 
 # labels
 LABELS = [
-    'BCHAIN/DIFF', 'BCHAIN/TRFEE', 'BCHAIN/MKTCP', 'BCHAIN/TOTBC',
-    'BCHAIN/MWNUS', 'BCHAIN/BCDDY', 'BCHAIN/BCDDM', 'BCHAIN/BCDDE',
-    'BCHAIN/TVTVR', 'BCHAIN/NETDF', 'BCHAIN/MIOPM', 'BCHAIN/MWNTD',
-    'BCHAIN/MWTRV', 'BCHAIN/AVBLS', 'BCHAIN/BLCHS', 'BCHAIN/ATRCT',
-    'BCHAIN/MIREV', 'BCHAIN/HRATE', 'BCHAIN/CPTRA', 'BCHAIN/CPTRV',
-    'BCHAIN/TRVOU', 'BCHAIN/TOUTV', 'BCHAIN/ETRVU', 'BCHAIN/ETRAV',
-    'BCHAIN/NTRBL', 'BCHAIN/NADDU', 'BCHAIN/NTREP', 'BCHAIN/NTRAT',
-    'BCHAIN/NTRAN', 'BCHAIN/MKPRU'
+    'DIFF', 'TRFEE', 'MKTCP', 'TOTBC',
+    'MWNUS', 'BCDDY', 'BCDDM', 'BCDDE',
+    'TVTVR', 'NETDF', 'MIOPM', 'MWNTD',
+    'MWTRV', 'AVBLS', 'BLCHS', 'ATRCT',
+    'MIREV', 'HRATE', 'CPTRA', 'CPTRV',
+    'TRVOU', 'TOUTV', 'ETRVU', 'ETRAV',
+    'NTRBL', 'NADDU', 'NTREP', 'NTRAT',
+    'NTRAN', 'MKPRU'
 ]
 
 
@@ -72,6 +71,7 @@ def scrap_all():
         ],
         axis=1)
 
+    DATA.columns = LABELS
     return DATA
 
 
@@ -79,7 +79,7 @@ def scrap_all():
 def scrap(date='today'):
     # check out the date inputted is 'today' or not
     if date is 'today':
-        date = datetime.today() 
+        date = datetime.today()
     else:
         date = date
 

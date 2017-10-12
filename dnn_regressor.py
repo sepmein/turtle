@@ -1,5 +1,5 @@
 """
-    Fully Connectted DNN regressor
+    Fully Connected DNN regressor
 """
 # TODO: inverse-scale data, get the params of the scaler
 # TODO: split data in to three parts: training, validation and test
@@ -11,50 +11,11 @@
 
 import pandas as pd
 import tensorflow as tf
-import numpy as np
 from sklearn import preprocessing
 
 # Setting logging verbosity
 tf.logging.set_verbosity(tf.logging.INFO)
 
-# Define target label
-TARGET_LABEL = ['MKPRU']
-
-# Define raw labels, from which function will generate feature labels
-RAW_LABELS = [
-    'DIFF', 'TRFEE', 'MKTCP', 'TOTBC', 'MWNUS', 'MWNTD', 'MWTRV', 'AVBLS',
-    'BLCHS', 'ATRCT', 'MIREV', 'HRATE', 'CPTRA', 'CPTRV', 'TRVOU', 'TOUTV',
-    'ETRVU', 'ETRAV', 'NTRBL', 'NADDU', 'NTREP', 'NTRAT', 'NTRAN'
-]
-
-
-def gen_feature_labels(labels, days):
-    """
-        generate data by days back
-        using "days" back data to predict BTC_USD value
-    """
-    gen_labels = []
-    for label in labels:
-        for j in range(days):
-            gen_labels.append(label + '_' + str(j + 1))
-    return gen_labels
-
-# Generate feature labels
-GEN_FEATURE_LABELS = gen_feature_labels(RAW_LABELS, 50)
-
-# read data from csv file
-gen_feature_data_training = pd.read_csv(
-    'gen_feature_data_training.csv').loc[:, 'DIFF_1':]
-gen_feature_data_cv = pd.read_csv(
-    'gen_feature_data_cv.csv').loc[:, 'DIFF_1':]
-gen_feature_data_test = pd.read_csv(
-    'gen_feature_data_test.csv').loc[:, 'DIFF_1':]
-gen_target_data_training = pd.read_csv(
-    'gen_target_data_training.csv').loc[:, 'MKPRU']
-gen_target_data_cv = pd.read_csv(
-    'gen_target_data_cv.csv').loc[:, 'MKPRU']
-gen_target_data_test = pd.read_csv(
-    'gen_target_data_test.csv').loc[:, 'MKPRU']
 
 # build tensorflow input layers
 FEATURES = []
@@ -64,7 +25,7 @@ for gen_feature_label in GEN_FEATURE_LABELS:
 # Data scaler
 SCALER = preprocessing.StandardScaler()
 FEATURE_SCALER = SCALER.fit(gen_feature_data_training)
-TARGET_SCALER = SCALER.fit(gen_target_data_training)
+TARGET_SCALER = SCALER.fit(gen_target_data_training.values.reshape(-1, 1))
 
 
 def input_fn(feature, target):
@@ -74,11 +35,11 @@ def input_fn(feature, target):
     """
     features_tf = {
         k: tf.constant(
-            FEATURE_SCALER.fit_transform(feature[k]),
+            FEATURE_SCALER.fit_transform(feature[k].values.reshape(-1, 1)),
             shape=[feature[k].size, 1])
         for k in GEN_FEATURE_LABELS
     }
-    target_tf = tf.constant(TARGET_SCALER.fit_transform(target))
+    target_tf = tf.constant(TARGET_SCALER.fit_transform(target.values.reshape(-1, 1)))
     return features_tf, target_tf
 
 
@@ -137,37 +98,44 @@ validation_monitor = tf.contrib.learn.monitors.ValidationMonitor(
 # Building models
 # tf dnn regressor is used
 # TODO: consider RNN model?
-ESTIMATOR = tf.contrib.learn.DNNRegressor(
+regressor = tf.estimator.DNNRegressor(
     feature_columns=FEATURES,
-    hidden_units=[512, 256, 128],
-    config=tf.contrib.learn.RunConfig(save_checkpoints_secs=300),
-    model_dir="/Users/Spencer/Desktop/turtle-model-50",
-    dropout=0.01
-    # optimizer=tf.train.ProximalAdagradOptimizer(
+    hidden_units=[64, 64, 64, 32, 32, 32, 16, 16, 16, 8, 8, 8, 4, 4, 4, 2],
+    model_dir="D:\\OneDrive\\models\\171010",
+    optimizer=tf.train.AdamOptimizer()    # optimizer=tf.train.ProximalAdagradOptimizer(
     #    learning_rate=0.05, l1_regularization_strength=0.1)
 )
 
 # Fit train model
-ESTIMATOR.fit(
+regressor.train(
     input_fn=input_fn_train,
-    monitors=[validation_monitor],
-    steps=100000
+    steps=10000
 )
 
-# Cross validate data
-ESTIMATOR.evaluate(
+# # Cross validate data
+regressor.evaluate(
     input_fn=input_fn_eval,
     steps=1
 )
 
-# Test and predict
-ESTIMATOR.evaluate(
-    input_fn=input_fn_test,
-    steps=1
-)
+#
+# # Test and predict
+# regressor.evaluate(
+#     input_fn=input_fn_test,
+#     steps=1
+# )
+
+# predictions_raw = list(regressor.predict(input_fn=input_fn_test))
+#
+# predictions = TARGET_SCALER.inverse_transform(predictions_raw)
+# print(predictions)
+#
+# predictions_data_frame = pd.DataFrame(predictions)
+# predictions.to_csv('predictions.csv')
 
 def get_estimator():
-    return ESTIMATOR
+    return regressor
+
 
 def get_scaler():
     return FEATURE_SCALER, TARGET_SCALER

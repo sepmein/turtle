@@ -1,14 +1,14 @@
 import tensorflow as tf
 
+from config import num_feature_labels, lambd, training_steps
 # import data
-from data_importer import gen_target_data_training, gen_feature_data_training, gen_target_data_cv, gen_feature_data_cv
-
-# fake input_vector_shape
-input_vector_shape = [1869, 1150]
+from data_importer import gen_target_data_training, \
+    gen_feature_data_training, gen_target_data_cv, \
+    gen_feature_data_cv
 
 # define model layers
 weight_dict = [
-    input_vector_shape[1], 128, 64, 1
+    num_feature_labels, 128, 64, 1
 ]
 num_layers = len(weight_dict) - 1
 
@@ -37,7 +37,7 @@ with tf.name_scope('data_placeholder'):
     x = tf.placeholder(
         dtype=tf.float32,
         name='training_features',
-        shape=[None, 1150]
+        shape=[None, num_feature_labels]
     )
     y = tf.placeholder(
         dtype=tf.float32,
@@ -63,14 +63,8 @@ with tf.name_scope('forward_propagation'):
     )
 
     h_3 = tf.matmul(a_2, weights[2], transpose_b=True) + biases[2]
-    # activation layer 1
-    a_3 = tf.nn.relu(
-        features=h_3,
-        name='activation_layer_3'
-    )
 
     # loss function
-    lambd = 0.1
     normalization = lambd * (
         tf.reduce_sum(
             tf.nn.l2_normalize(
@@ -90,12 +84,10 @@ with tf.name_scope('forward_propagation'):
                 dim=[0, 1]
             )
         )
-
     )
     # Loss function
-    m = x.get_shape().as_list()[0]
     loss = tf.losses.mean_squared_error(
-        labels=a_3,
+        labels=h_3,
         predictions=y
     ) + normalization
     # tf.reduce_sum(tf.square(tf.abs(a_2 - y))) / (2 * m) + normalization
@@ -106,7 +98,7 @@ with tf.name_scope('models'):
 
 with tf.Session() as session:
     session.run(tf.global_variables_initializer())
-    for _ in range(100000):
+    for _ in range(training_steps):
         session.run(
             optimization,
             {
@@ -129,10 +121,3 @@ with tf.Session() as session:
                     y: gen_target_data_cv
                 })
             print("Epoch:", '%04d' % (_ + 1), "cost=", "{:.9f}".format(l), "cv=", "{:.9f}".format(l_cv))
-# Model
-
-
-# debugger
-# session = tf.Session()
-# session.run(tf.global_variables_initializer())
-# session.run([weights, biases])

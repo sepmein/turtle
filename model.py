@@ -77,13 +77,13 @@ with tf.name_scope('forward_propagation'):
     ) + l2_regularization
     # tf.reduce_sum(tf.square(tf.abs(a_2 - y))) / (2 * m) + l2_regularization
 
-    mean_relative_error = tf.metrics.mean_relative_error(
+    mean_relative_error, ops_1 = tf.metrics.mean_relative_error(
         labels=h_3,
         predictions=y,
         normalizer=y
     )
 
-    mean_absolute_error = tf.metrics.mean_absolute_error(
+    mean_absolute_error, ops_2 = tf.metrics.mean_absolute_error(
         labels=h_3,
         predictions=y
     )
@@ -173,7 +173,7 @@ with tf.Session() as session:
                     y: gen_target_data_training
                 }
             )
-            l_cv, (mre, inc), (mae, inc_2) = session.run(
+            l_cv, mre, mae = session.run(
                 [loss, mean_relative_error, mean_absolute_error],
                 {
                     x: gen_feature_data_cv,

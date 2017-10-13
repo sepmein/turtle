@@ -28,7 +28,7 @@ start_at = 590
 learning_rate = 0.001
 
 # L2 norm lambda
-lambd = 0.1
+lambd = 0
 
 
 def generate_feature_label(labels, days):
@@ -48,3 +48,6 @@ generated_feature_labels = generate_feature_label(feature_labels, days_before)
 
 # training steps
 training_steps = 100000
+
+# summary config
+logdir = 'c:\\test_sum'

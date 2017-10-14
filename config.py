@@ -21,14 +21,14 @@ test_set_split_ratio = 0.1
 
 # Define how much rows should be skipped
 # Because at the initial year of bitcoin, there weren't any $-BTC data.
-# So it should be skipped
+
 start_at = 590
 
 # Learning rate
-learning_rate = 0.001
+learning_rate = 0.0001
 
 # L2 norm lambda
-lambd = 0
+lambd = 10
 
 
 def generate_feature_label(labels, days):

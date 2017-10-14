@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from config import num_feature_labels, lambd, training_steps, logdir
+from config import num_feature_labels, lambd, training_steps, logdir, learning_rate
 # import data
 from data_importer import gen_target_data_training, \
     gen_feature_data_training, gen_target_data_cv, \
@@ -77,16 +77,15 @@ with tf.name_scope('forward_propagation'):
     ) + l2_regularization
     # tf.reduce_sum(tf.square(tf.abs(a_2 - y))) / (2 * m) + l2_regularization
 
-    mean_relative_error, ops_1 = tf.metrics.mean_relative_error(
-        labels=h_3,
-        predictions=y,
-        normalizer=y
-    )
+    # mean_relative_error = tf.metrics.mean_relative_error(
+    #     labels=h_3,
+    #     predictions=y,
+    #     normalizer=y
+    # )
 
-    mean_absolute_error, ops_2 = tf.metrics.mean_absolute_error(
-        labels=h_3,
-        predictions=y
-    )
+    mean_absolute_error = tf.abs(tf.reduce_mean(h_3 - y))
+
+    mean_relative_error = tf.abs(tf.reduce_mean((h_3 - y) / y))
 
 with tf.name_scope('summary'):
     # define summaries
@@ -98,14 +97,14 @@ with tf.name_scope('summary'):
         name='L2_norm',
         tensor=l2_regularization
     )
-    # tf.summary.scalar(
-    #     name='mean_relative_error_cv',
-    #     tensor=mean_absolute_error
-    # )
-    # tf.summary.scalar(
-    #     name='mean_relative_error_cv',
-    #     tensor=mean_relative_error
-    # )
+    tf.summary.scalar(
+        name='mean_absolute_error',
+        tensor=mean_absolute_error
+    )
+    tf.summary.scalar(
+        name='mean_relative_error',
+        tensor=mean_relative_error
+    )
     tf.summary.histogram(
         name='w_1',
         values=weights[0]
@@ -119,23 +118,33 @@ with tf.name_scope('summary'):
         values=weights[2]
     )
     tf.summary.histogram(
-        name='b_1',
-        values=biases[0]
+        name='a_1',
+        values=a_1
     )
     tf.summary.histogram(
-        name='b_2',
-        values=biases[1]
+        name='h_1',
+        values=h_1
     )
     tf.summary.histogram(
-        name='b_3',
-        values=biases[2]
+        name='a_2',
+        values=a_2
+    )
+    tf.summary.histogram(
+        name='h_2',
+        values=h_2
+    )
+    tf.summary.histogram(
+        name='h_3',
+        values=h_3
     )
 
     # merge all summary as a tensor op
     summaries = tf.summary.merge_all()
 
 with tf.name_scope('models'):
-    optimizer = tf.train.AdamOptimizer()
+    optimizer = tf.train.AdamOptimizer(
+        learning_rate=learning_rate
+    )
     optimization = optimizer.minimize(loss)
 
 with tf.Session() as session:
@@ -145,36 +154,35 @@ with tf.Session() as session:
 
     # add session.graph to summary writer
     # summary writer to disk
-    summary_writer = tf.summary.FileWriter(
-        logdir=logdir,
+    train_summary_writer = tf.summary.FileWriter(
+        logdir=logdir + '/train',
         graph=session.graph
     )
 
+    cv_summary_writer = tf.summary.FileWriter(
+        logdir=logdir + '/cv',
+        graph=session.graph
+    )
     # train model
     for _ in range(training_steps):
-        summaries_results, optimization_results = session.run(
-            [summaries, optimization],
+        optimization_results = session.run(
+            optimization,
             {
                 x: gen_feature_data_training,
                 y: gen_target_data_training
             }
         )
 
-        summary_writer.add_summary(
-            summary=summaries_results,
-            global_step=_
-        )
-
-        if _ % 100 == 0:
-            l = session.run(
-                loss,
+        if _ % 10 == 0:
+            summaries_results_train, l, mre_train, mae_train = session.run(
+                [summaries, loss, mean_relative_error, mean_absolute_error],
                 {
                     x: gen_feature_data_training,
                     y: gen_target_data_training
                 }
             )
-            l_cv, mre, mae = session.run(
-                [loss, mean_relative_error, mean_absolute_error],
+            summaries_results_cv, l_cv, mre_cv, mae_cv = session.run(
+                [summaries, loss, mean_relative_error, mean_absolute_error],
                 {
                     x: gen_feature_data_cv,
                     y: gen_target_data_cv
@@ -182,6 +190,20 @@ with tf.Session() as session:
             norm = session.run(
                 l2_regularization
             )
-            print("Epoch:", '%04d' % (_ + 1), "cost=", "{:.9f}".format(l), "cv=", "{:.9f}".format(l_cv), "mre", mre,
-                  "mae", mae)
+            print("Epoch:", '%04d' % (_ + 1), "cost=", "{:.9f}".format(l), "cv=", "{:.9f}".format(l_cv))
+            print(
+                "mre_train", mre_train,
+                "mae_train", mae_train,
+                "mre_cv", mre_cv,
+                "mae_cv", mae_cv
+            )
             print("L2 regularization: ", norm)
+            train_summary_writer.add_summary(
+                summary=summaries_results_train,
+                global_step=_
+            )
+
+            cv_summary_writer.add_summary(
+                summary=summaries_results_cv,
+                global_step=_
+            )

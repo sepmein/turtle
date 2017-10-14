@@ -87,65 +87,74 @@ with tf.name_scope('forward_propagation'):
 
     mean_relative_error = tf.abs(tf.reduce_mean((h_3 - y) / y))
 
-with tf.name_scope('summary'):
+with tf.name_scope('metrics'):
     # define summaries
-    tf.summary.scalar(
-        name='loss',
-        tensor=loss
-    )
+    with tf.name_scope('loss'):
+        tf.summary.scalar(
+            name='loss',
+            tensor=loss
+        )
+
     tf.summary.scalar(
         name='L2_norm',
         tensor=l2_regularization
     )
-    tf.summary.scalar(
-        name='mean_absolute_error',
-        tensor=mean_absolute_error
-    )
-    tf.summary.scalar(
-        name='mean_relative_error',
-        tensor=mean_relative_error
-    )
-    tf.summary.histogram(
-        name='w_1',
-        values=weights[0]
-    )
-    tf.summary.histogram(
-        name='w_2',
-        values=weights[1]
-    )
-    tf.summary.histogram(
-        name='w_3',
-        values=weights[2]
-    )
-    tf.summary.histogram(
-        name='a_1',
-        values=a_1
-    )
-    tf.summary.histogram(
-        name='h_1',
-        values=h_1
-    )
-    tf.summary.histogram(
-        name='a_2',
-        values=a_2
-    )
-    tf.summary.histogram(
-        name='h_2',
-        values=h_2
-    )
-    tf.summary.histogram(
-        name='h_3',
-        values=h_3
-    )
+    with tf.name_scope('metrics'):
+        tf.summary.scalar(
+            name='mean_absolute_error',
+            tensor=mean_absolute_error
+        )
+        tf.summary.scalar(
+            name='mean_relative_error',
+            tensor=mean_relative_error
+        )
+    with tf.name_scope('weights'):
+        tf.summary.histogram(
+            name='w_1',
+            values=weights[0]
+        )
+        tf.summary.histogram(
+            name='w_2',
+            values=weights[1]
+        )
+        tf.summary.histogram(
+            name='w_3',
+            values=weights[2]
+        )
 
-    # merge all summary as a tensor op
-    summaries = tf.summary.merge_all()
+    with tf.name_scope('hidden_layers'):
+        tf.summary.histogram(
+            name='a_1',
+            values=a_1
+        )
+        tf.summary.histogram(
+            name='h_1',
+            values=h_1
+        )
+        tf.summary.histogram(
+            name='a_2',
+            values=a_2
+        )
+        tf.summary.histogram(
+            name='h_2',
+            values=h_2
+        )
+        tf.summary.histogram(
+            name='h_3',
+            values=h_3
+        )
+
+# merge all summary as a tensor op
+summaries = tf.summary.merge_all()
 
 with tf.name_scope('models'):
     optimizer = tf.train.AdamOptimizer(
         learning_rate=learning_rate
     )
     optimization = optimizer.minimize(loss)
+
+with tf.name_scope('saver'):
+    saver = tf.train.Saver()
 
 with tf.Session() as session:
     # initialize tf.variable

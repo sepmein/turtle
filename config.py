@@ -25,7 +25,7 @@ test_set_split_ratio = 0.1
 start_at = 590
 
 # Learning rate
-learning_rate = 0.0001
+learning_rate = 0.00001
 
 # L2 norm lambda
 lambd = 10
@@ -47,7 +47,10 @@ def generate_feature_label(labels, days):
 generated_feature_labels = generate_feature_label(feature_labels, days_before)
 
 # training steps
-training_steps = 100000
+training_steps = 1000000
 
 # summary config
 logdir = 'c:\\test_sum'
+
+# record intervals
+record_interval = 10

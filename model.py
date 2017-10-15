@@ -1,6 +1,7 @@
 import tensorflow as tf
 
-from config import num_feature_labels, lambd, training_steps, logdir, learning_rate
+# import configurations
+from config import num_feature_labels, lambd, training_steps, logdir, learning_rate, record_interval
 # import data
 from data_importer import gen_target_data_training, \
     gen_feature_data_training, gen_target_data_cv, \
@@ -23,10 +24,11 @@ with tf.name_scope('parameters_initialize'):
             initializer=tf.contrib.layers.xavier_initializer(),
             dtype=tf.float32
         )
-        b = tf.zeros(
+        b = tf.get_variable(
             name='b_' + str(i + 1),
             shape=[weight_dict[i + 1]],
-            dtype=tf.float32
+            dtype=tf.float32,
+            initializer=tf.zeros_initializer()
         )
         weights.append(w)
         biases.append(b)
@@ -43,6 +45,8 @@ with tf.name_scope('data_placeholder'):
         name='training_targets',
         shape=[None, 1]
     )
+    tf.add_to_collection('inputs', x)
+    tf.add_to_collection('inputs', y)
 
 with tf.name_scope('forward_propagation'):
     # Forward propagation
@@ -61,7 +65,11 @@ with tf.name_scope('forward_propagation'):
         name='activation_layer_2'
     )
     # hypothesis layer 3
-    h_3 = tf.matmul(a_2, weights[2], transpose_b=True) + biases[2]
+    h_3 = tf.add(
+        x=tf.matmul(a_2, weights[2], transpose_b=True),
+        y=biases[2],
+        name='prediction'
+    )
 
     # L2 norm of w's
     l2_regularization = lambd * (
@@ -121,7 +129,19 @@ with tf.name_scope('metrics'):
             name='w_3',
             values=weights[2]
         )
-
+    with tf.name_scope('biases'):
+        tf.summary.histogram(
+            name='b_1',
+            values=biases[0]
+        )
+        tf.summary.histogram(
+            name='b_2',
+            values=biases[1]
+        )
+        tf.summary.histogram(
+            name='b_3',
+            values=biases[2]
+        )
     with tf.name_scope('hidden_layers'):
         tf.summary.histogram(
             name='a_1',
@@ -153,9 +173,6 @@ with tf.name_scope('models'):
     )
     optimization = optimizer.minimize(loss)
 
-with tf.name_scope('saver'):
-    saver = tf.train.Saver()
-
 with tf.Session() as session:
     # initialize tf.variable
     session.run(tf.global_variables_initializer())
@@ -182,7 +199,9 @@ with tf.Session() as session:
             }
         )
 
-        if _ % 10 == 0:
+        lowest_cv_mae = 100000
+        lowest_step = 0
+        if _ % record_interval == 0:
             summaries_results_train, l, mre_train, mae_train = session.run(
                 [summaries, loss, mean_relative_error, mean_absolute_error],
                 {
@@ -216,3 +235,22 @@ with tf.Session() as session:
                 summary=summaries_results_cv,
                 global_step=_
             )
+
+            if (_ >= 35000) and (_ % record_interval * 3 == 0):
+
+                if mae_cv < lowest_cv_mae:
+                    lowest_cv_mae = mae_cv
+                    lowest_step = _
+                    # save model
+                    # build saver
+                    saver = tf.saved_model.builder.SavedModelBuilder(
+                        export_dir=logdir + '/model' + str(_)
+                    )
+                    saver.add_meta_graph_and_variables(
+                        session,
+                        ['turtle']
+                    )
+                    # trained_weights_0 = session.run(weights[0])
+                    # trained_weights_0_pd = pd.DataFrame(trained_weights_0)
+                    # trained_weights_0_pd.to_csv('weights.csv')
+                    saver.save()

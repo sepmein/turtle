@@ -47,7 +47,7 @@ def generate_feature_label(labels, days):
 generated_feature_labels = generate_feature_label(feature_labels, days_before)
 
 # training steps
-training_steps = 1000000
+training_steps = 500000
 
 # summary config
 logdir = 'c:\\test_sum'

@@ -173,6 +173,7 @@ with tf.name_scope('models'):
     )
     optimization = optimizer.minimize(loss)
 
+lowest_step = []
 with tf.Session() as session:
     # initialize tf.variable
     session.run(tf.global_variables_initializer())
@@ -200,7 +201,6 @@ with tf.Session() as session:
         )
 
         lowest_cv_mae = 100000
-        lowest_step = 0
         if _ % record_interval == 0:
             summaries_results_train, l, mre_train, mae_train = session.run(
                 [summaries, loss, mean_relative_error, mean_absolute_error],
@@ -240,7 +240,7 @@ with tf.Session() as session:
 
                 if mae_cv < lowest_cv_mae:
                     lowest_cv_mae = mae_cv
-                    lowest_step = _
+                    lowest_step.append(_)
                     # save model
                     # build saver
                     saver = tf.saved_model.builder.SavedModelBuilder(
@@ -254,3 +254,5 @@ with tf.Session() as session:
                     # trained_weights_0_pd = pd.DataFrame(trained_weights_0)
                     # trained_weights_0_pd.to_csv('weights.csv')
                     saver.save()
+
+print(lowest_step)

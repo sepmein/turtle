@@ -4,7 +4,32 @@ from config import logdir
 from data_importer import gen_feature_data_cv, gen_feature_data_training, gen_target_data_cv, gen_target_data_training
 
 model_dir = logdir + '\\model35010 mark'
-with tf.Session() as session:
+
+
+# with tf.Session() as session:
+#     results = session.run(
+#         h_3,
+#         {
+#             x: gen_feature_data_cv
+#         }
+#     )
+#
+#     print(results)
+#
+#     mar = tf.reduce_mean(tf.abs(h_3 - y))
+#     print(session.run(mar, {
+#         x: gen_feature_data_cv,
+#         y: gen_target_data_cv
+#     }))
+#
+#     print(session.run(mar, {
+#         x: gen_feature_data_training,
+#         y: gen_target_data_training
+#     }))
+
+
+def load_model():
+    session = tf.Session()
     loader = tf.saved_model.loader.load(session, ['turtle'], model_dir)
     graph = tf.get_default_graph()
     predictions = graph.get_operation_by_name('forward_propagation/prediction')
@@ -26,24 +51,15 @@ with tf.Session() as session:
     a_2 = tf.nn.relu(h_2)
     w_3 = graph.get_tensor_by_name('w_3:0')
     b_3 = graph.get_tensor_by_name('b_3:0')
-    h_3 = tf.matmul(a_2, w_3, transpose_b=True) + b_3
+    predictions = tf.matmul(a_2, w_3, transpose_b=True) + b_3
 
-    results = session.run(
-        h_3,
-        {
-            x: gen_feature_data_cv
-        }
-    )
+    return session, predictions, x
 
-    print(results)
 
-    mar = tf.reduce_mean(tf.abs(h_3 - y))
-    print(session.run(mar, {
-        x: gen_feature_data_cv,
-        y: gen_target_data_cv
-    }))
-
-    print(session.run(mar, {
-        x: gen_feature_data_training,
-        y: gen_target_data_training
-    }))
+def predict(feature):
+    session, predictions, x = load_model()
+    results = session.run(predictions, {
+        x: feature
+    })
+    session.close()
+    return results

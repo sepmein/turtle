@@ -2,26 +2,16 @@
     Scrap quandl for the bitcoin data
 """
 
-from datetime import datetime
-
-import pandas as pd
 # imports
+from datetime import datetime, timedelta
+from config import api_key, days_before, feature_labels
+import pandas as pd
 import quandl
+from preprocess import gen_days_back, fit_transform
 
-# api key
-quandl.ApiConfig.api_key = "6ywQ69kRqt26zAsHkFDP"
+quandl.ApiConfig.api_key = api_key
 
-# labels
-LABELS = [
-    'DIFF', 'TRFEE', 'MKTCP', 'TOTBC',
-    'MWNUS', 'BCDDY', 'BCDDM', 'BCDDE',
-    'TVTVR', 'NETDF', 'MIOPM', 'MWNTD',
-    'MWTRV', 'AVBLS', 'BLCHS', 'ATRCT',
-    'MIREV', 'HRATE', 'CPTRA', 'CPTRV',
-    'TRVOU', 'TOUTV', 'ETRVU', 'ETRAV',
-    'NTRBL', 'NADDU', 'NTREP', 'NTRAT',
-    'NTRAN', 'MKPRU'
-]
+all_labels = feature_labels
 
 
 def scrap_all():
@@ -58,9 +48,9 @@ def scrap_all():
     NTREP = quandl.get('BCHAIN/NTREP')
     NTRAT = quandl.get('BCHAIN/NTRAT')
     NTRAN = quandl.get('BCHAIN/NTRAN')
-    ## target value
+    # target value
     MKPRU = quandl.get('BCHAIN/MKPRU')
-    ## manipulating data
+    # manipulating data
     # concacenating
     DATA = pd.concat(
         [
@@ -71,7 +61,7 @@ def scrap_all():
         ],
         axis=1)
 
-    DATA.columns = LABELS
+    DATA.columns = feature_labels
     return DATA
 
 
@@ -83,13 +73,19 @@ def scrap(date='today'):
     else:
         date = date
 
+    # days back
+    days_interval = timedelta(days=days_before - 1)
+    date_before = date - days_interval
     # get the date of today if need
     result = []
-    result.append(quandl.get(k) for k in LABELS)
-    # define the labels to be scraped
+    for label in all_labels:
+        temp = quandl.get('BCHAIN/' + label, start_date=date_before, end_date=date)
+        result.append(temp)
 
-    # scrap the data 50 days_before back
-
-    # concacenating data
-
-    # return data
+    data_frame = pd.concat(result, axis=1)
+    data_frame.columns = all_labels
+    gen_df = gen_days_back(data=data_frame,
+                           labels=feature_labels,
+                           days=days_before)
+    gen_df = fit_transform(gen_df)
+    return gen_df

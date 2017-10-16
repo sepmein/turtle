@@ -1,6 +1,6 @@
 import pandas as pd
 import tensorflow as tf
-from sklearn import preprocessing
+from preprocess import fit_transform
 
 # read data from generated csv file
 gen_feature_data_training = pd.read_csv(
@@ -38,15 +38,10 @@ test_data_input_fn = tf.estimator.inputs.pandas_input_fn(
     shuffle=True
 )
 
-# prepossess using sklearn module
-# feature scalar
-scalar = preprocessing.StandardScaler()
-feature_scalar = scalar.fit(gen_feature_data_training)
-
 # scale feature data
-gen_feature_data_training = feature_scalar.fit_transform(gen_feature_data_training)
-gen_feature_data_cv = feature_scalar.fit_transform(gen_feature_data_cv)
-gen_feature_data_test = feature_scalar.fit_transform(gen_feature_data_test)
+gen_feature_data_training = fit_transform(gen_feature_data_training)
+gen_feature_data_cv = fit_transform(gen_feature_data_cv)
+gen_feature_data_test = fit_transform(gen_feature_data_test)
 
 # reshape target data to fit tensor shape
 gen_target_data_training = gen_target_data_training.values.reshape(-1, 1)

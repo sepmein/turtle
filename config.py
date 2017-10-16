@@ -50,7 +50,7 @@ generated_feature_labels = generate_feature_label(feature_labels, days_before)
 training_steps = 500000
 
 # summary config
-logdir = 'c:\\test_sum'
+logdir = 'C:\\Users\\sepmein\\OneDrive\\models\\turtle\\models-2'
 
 # record intervals
 record_interval = 10

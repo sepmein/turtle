@@ -3,7 +3,7 @@ import tensorflow as tf
 from config import logdir
 from data_importer import gen_feature_data_cv, gen_feature_data_training, gen_target_data_cv, gen_target_data_training
 
-model_dir = logdir + '\\model'
+model_dir = logdir + '\\model35010 mark'
 with tf.Session() as session:
     loader = tf.saved_model.loader.load(session, ['turtle'], model_dir)
     graph = tf.get_default_graph()
@@ -37,7 +37,7 @@ with tf.Session() as session:
 
     print(results)
 
-    mar = tf.reduce_mean(h_3 - y)
+    mar = tf.reduce_mean(tf.abs(h_3 - y))
     print(session.run(mar, {
         x: gen_feature_data_cv,
         y: gen_target_data_cv

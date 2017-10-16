@@ -91,9 +91,8 @@ with tf.name_scope('forward_propagation'):
     #     normalizer=y
     # )
 
-    mean_absolute_error = tf.abs(tf.reduce_mean(h_3 - y))
-
-    mean_relative_error = tf.abs(tf.reduce_mean((h_3 - y) / y))
+    mean_absolute_error = tf.reduce_mean(tf.abs(h_3 - y))
+    mean_relative_error = tf.reduce_mean(tf.abs((h_3 - y) / y))
 
 with tf.name_scope('metrics'):
     # define summaries
@@ -174,6 +173,7 @@ with tf.name_scope('models'):
     optimization = optimizer.minimize(loss)
 
 lowest_step = []
+lowest_cv_mae = 100000
 with tf.Session() as session:
     # initialize tf.variable
     session.run(tf.global_variables_initializer())
@@ -200,7 +200,6 @@ with tf.Session() as session:
             }
         )
 
-        lowest_cv_mae = 100000
         if _ % record_interval == 0:
             summaries_results_train, l, mre_train, mae_train = session.run(
                 [summaries, loss, mean_relative_error, mean_absolute_error],

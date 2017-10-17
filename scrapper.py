@@ -3,11 +3,13 @@
 """
 
 # imports
-from datetime import datetime, timedelta
-from config import api_key, days_before, feature_labels
+from datetime import date, datetime, timedelta
+
 import pandas as pd
 import quandl
-from preprocess import gen_days_back, fit_transform
+
+from config import api_key, days_before, feature_labels
+from preprocess import gen_days_back, fit_transform, interpolate
 
 quandl.ApiConfig.api_key = api_key
 
@@ -66,26 +68,41 @@ def scrap_all():
 
 
 # scrap a specific date
-def scrap(date='today'):
+def scrap(year, month, day):
+    """
+    To scrap bitcoin data from quandl and preprocess it using predefined preprocess module
+    :param date: a date string
+    :return: a data frame object to be feed to model
+    """
     # check out the date inputted is 'today' or not
-    if date is 'today':
-        date = datetime.today()
+    # FIXME quandl api timezone and china timezone not compatible, the latest data will be NaN ocassionally (8/24?)
+    if year is None:
+        target_date = datetime.today()
     else:
-        date = date
+        target_date = date(year, month, day)
 
     # days back
+    end_date = target_date - timedelta(days=1)
     days_interval = timedelta(days=days_before - 1)
-    date_before = date - days_interval
+    start_date = end_date - days_interval
     # get the date of today if need
     result = []
     for label in all_labels:
-        temp = quandl.get('BCHAIN/' + label, start_date=date_before, end_date=date)
+        temp = quandl.get('BCHAIN/' + label, start_date=start_date, end_date=end_date)
         result.append(temp)
 
     data_frame = pd.concat(result, axis=1)
     data_frame.columns = all_labels
-    gen_df = gen_days_back(data=data_frame,
-                           labels=feature_labels,
-                           days=days_before)
+
+    # interpolation
+    interpolated = interpolate(data_frame)
+
+    # interpolated.to_csv('data.csv')
+    # use data preprocess api to generate data to feed model
+    gen_df, labels = gen_days_back(data=interpolated,
+                                   labels=feature_labels,
+                                   days=days_before)
+
+    # perform data transformation
     gen_df = fit_transform(gen_df)
     return gen_df

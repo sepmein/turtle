@@ -8,7 +8,7 @@ from config import feature_labels, start_at, target_label, \
     training_set_split_ratio, cross_validation_set_split_ratio, num_feature_labels, days_before
 
 # read raw data
-RAW_DATA = pd.read_csv('./data/raw/data_071011.csv')
+RAW_DATA = pd.read_csv('./data/raw/interpolated_071018.csv')
 
 # Convert data string to pandas datatime format
 RAW_DATA['Date'] = pd.to_datetime(RAW_DATA['Date'])

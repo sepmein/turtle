@@ -235,7 +235,7 @@ with tf.Session() as session:
                 global_step=_
             )
 
-            if (_ >= 35000) and (_ % record_interval * 3 == 0):
+            if (_ >= 25000) and (_ % record_interval * 3 == 0):
 
                 if mae_cv < lowest_cv_mae:
                     lowest_cv_mae = mae_cv

@@ -3,7 +3,7 @@ import tensorflow as tf
 # import configurations
 from config import num_feature_labels, lambd, training_steps, logdir, learning_rate, record_interval
 # import data
-from data_importer import gen_target_data_training, \
+from data_fetcher.input_fn import gen_target_data_training, \
     gen_feature_data_training, gen_target_data_cv, \
     gen_feature_data_cv
 

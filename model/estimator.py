@@ -1,7 +1,7 @@
 import tensorflow as tf
 
 from config import logdir
-from data_importer import gen_feature_data_cv
+from data_fetcher.input_fn import gen_feature_data_cv
 
 model_dir = logdir + '\\model35010 mark'
 

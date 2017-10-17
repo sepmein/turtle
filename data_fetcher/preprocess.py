@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 
-from config import num_feature_labels
+from config import num_feature_labels, feature_labels, days_before
 
 # prepossess using sklearn module
 gen_feature_data_training = pd.read_csv(
@@ -15,8 +15,8 @@ feature_scalar = scalar.fit(gen_feature_data_training)
 # FIXME reverse the procedure of gen_days_back fn and fit_transform
 # procedure right now gen_days_back -> fit_transform
 # cause the gen_days_back fn generated lots of duplicated data
-def fit_transform(data):
-    return feature_scalar.fit_transform(
+def transform(data):
+    return feature_scalar.transform(
         data
     )
 
@@ -57,3 +57,15 @@ def interpolate(data_frame):
     :return: interpolated data frame object
     """
     return data_frame.interpolate()
+
+
+def execute(data_frame):
+    """
+    Fn to execute all the preprocess function
+    :param data_frame: pandas df object
+    :return: preprocessed data
+    """
+    interpolated = interpolate(data_frame)
+    generated, labels = gen_days_back(interpolated, feature_labels, days_before)
+    transformed = transform(generated)
+    return transformed

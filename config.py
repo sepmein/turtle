@@ -50,7 +50,7 @@ generated_feature_labels = generate_feature_label(feature_labels, days_before)
 training_steps = 500000
 
 # summary config
-logdir = 'c:\\Users\\sepmein\\onedrive\\models\\turtle\\models-2'
+logdir = 'c:\\model'
 # api key
 api_key = "6ywQ69kRqt26zAsHkFDP"
 

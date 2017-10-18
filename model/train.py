@@ -7,6 +7,9 @@ from data_fetcher.input_fn import gen_target_data_training, \
     gen_feature_data_training, gen_target_data_cv, \
     gen_feature_data_cv
 
+# setting verbosity
+tf.logging.set_verbosity(tf.logging.ERROR)
+
 # define model layers
 weight_dict = [
     num_feature_labels, 128, 64, 1
@@ -235,7 +238,7 @@ with tf.Session() as session:
                 global_step=_
             )
 
-            if (_ >= 25000) and (_ % record_interval * 3 == 0):
+            if (_ >= 26000) and (_ % (record_interval * 3) == 0):
 
                 if mae_cv < lowest_cv_mae:
                     lowest_cv_mae = mae_cv

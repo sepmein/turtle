@@ -7,9 +7,7 @@ from data_fetcher.input_fn import gen_target_data_training, \
     gen_feature_data_training, gen_target_data_cv, \
     gen_feature_data_cv
 
-# setting verbosity
 tf.logging.set_verbosity(tf.logging.ERROR)
-
 # define model layers
 weight_dict = [
     num_feature_labels, 128, 64, 1
@@ -220,14 +218,14 @@ with tf.Session() as session:
             norm = session.run(
                 l2_regularization
             )
-            print("Epoch:", '%04d' % (_ + 1), "cost=", "{:.9f}".format(l), "cv=", "{:.9f}".format(l_cv))
-            print(
-                "mre_train", mre_train,
-                "mae_train", mae_train,
-                "mre_cv", mre_cv,
-                "mae_cv", mae_cv
-            )
-            print("L2 regularization: ", norm)
+            # print("Epoch:", '%04d' % (_ + 1), "cost=", "{:.9f}".format(l), "cv=", "{:.9f}".format(l_cv))
+            # print(
+            #     "mre_train", mre_train,
+            #     "mae_train", mae_train,
+            #     "mre_cv", mre_cv,
+            #     "mae_cv", mae_cv
+            # )
+            # print("L2 regularization: ", norm)
             train_summary_writer.add_summary(
                 summary=summaries_results_train,
                 global_step=_
@@ -238,10 +236,13 @@ with tf.Session() as session:
                 global_step=_
             )
 
-            if (_ >= 26000) and (_ % (record_interval * 3) == 0):
+            if (_ >= 50000) and (_ % (record_interval * 3) == 0):
 
-                if mae_cv < lowest_cv_mae:
+                is_smaller_than_threshold = ((lowest_cv_mae - mae_cv) / mae_cv) > 0.005
+                print(((lowest_cv_mae - mae_cv) / lowest_cv_mae))
+                if mae_cv < lowest_cv_mae and is_smaller_than_threshold:
                     lowest_cv_mae = mae_cv
+                    print('step: ', _, ' | mae_cv: ', mae_cv)
                     lowest_step.append(_)
                     # save model
                     # build saver
@@ -256,5 +257,3 @@ with tf.Session() as session:
                     # trained_weights_0_pd = pd.DataFrame(trained_weights_0)
                     # trained_weights_0_pd.to_csv('weights.csv')
                     saver.save()
-
-print(lowest_step)

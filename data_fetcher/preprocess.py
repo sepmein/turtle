@@ -33,7 +33,7 @@ def gen_days_back(data, labels, days, starts_at=None):
         for j in range(days):
             gen_labels.append(label + '_' + str(j + 1))
 
-    if starts_at == None:
+    if starts_at is None:
         starts_at = days
 
     for k in range(starts_at - 1, num_data):

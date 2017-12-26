@@ -191,6 +191,15 @@ with tf.Session() as session:
         logdir=logdir + '/cv',
         graph=session.graph
     )
+    # save model
+    # build saver
+    saver = tf.saved_model.builder.SavedModelBuilder(
+        export_dir=logdir + '/model'
+    )
+    saver.add_meta_graph_and_variables(
+        session,
+        ['turtle']
+    )
     # train model
     for _ in range(training_steps):
         optimization_results = session.run(
@@ -201,59 +210,50 @@ with tf.Session() as session:
             }
         )
 
-        if _ % record_interval == 0:
-            summaries_results_train, l, mre_train, mae_train = session.run(
-                [summaries, loss, mean_relative_error, mean_absolute_error],
-                {
-                    x: gen_feature_data_training,
-                    y: gen_target_data_training
-                }
-            )
-            summaries_results_cv, l_cv, mre_cv, mae_cv = session.run(
-                [summaries, loss, mean_relative_error, mean_absolute_error],
-                {
-                    x: gen_feature_data_cv,
-                    y: gen_target_data_cv
-                })
-            norm = session.run(
-                l2_regularization
-            )
-            # print("Epoch:", '%04d' % (_ + 1), "cost=", "{:.9f}".format(l), "cv=", "{:.9f}".format(l_cv))
-            # print(
-            #     "mre_train", mre_train,
-            #     "mae_train", mae_train,
-            #     "mre_cv", mre_cv,
-            #     "mae_cv", mae_cv
-            # )
-            # print("L2 regularization: ", norm)
-            train_summary_writer.add_summary(
-                summary=summaries_results_train,
-                global_step=_
-            )
+    if _ % record_interval == 0:
+        summaries_results_train, l, mre_train, mae_train = session.run(
+            [summaries, loss, mean_relative_error, mean_absolute_error],
+            {
+                x: gen_feature_data_training,
+                y: gen_target_data_training
+            }
+        )
+        summaries_results_cv, l_cv, mre_cv, mae_cv = session.run(
+            [summaries, loss, mean_relative_error, mean_absolute_error],
+            {
+                x: gen_feature_data_cv,
+                y: gen_target_data_cv
+            })
+        norm = session.run(
+            l2_regularization
+        )
+        # print("Epoch:", '%04d' % (_ + 1), "cost=", "{:.9f}".format(l), "cv=", "{:.9f}".format(l_cv))
+        # print(
+        #     "mre_train", mre_train,
+        #     "mae_train", mae_train,
+        #     "mre_cv", mre_cv,
+        #     "mae_cv", mae_cv
+        # )
+        # print("L2 regularization: ", norm)
+        train_summary_writer.add_summary(
+            summary=summaries_results_train,
+            global_step=_
+        )
 
-            cv_summary_writer.add_summary(
-                summary=summaries_results_cv,
-                global_step=_
-            )
+        cv_summary_writer.add_summary(
+            summary=summaries_results_cv,
+            global_step=_
+        )
 
-            if (_ >= 50000) and (_ % (record_interval * 3) == 0):
+        if (_ >= 50000) and (_ % (record_interval * 3) == 0):
 
-                is_smaller_than_threshold = ((lowest_cv_mae - mae_cv) / mae_cv) > 0.005
-                print(((lowest_cv_mae - mae_cv) / lowest_cv_mae))
-                if mae_cv < lowest_cv_mae and is_smaller_than_threshold:
-                    lowest_cv_mae = mae_cv
-                    print('step: ', _, ' | mae_cv: ', mae_cv)
-                    lowest_step.append(_)
-                    # save model
-                    # build saver
-                    saver = tf.saved_model.builder.SavedModelBuilder(
-                        export_dir=logdir + '/model' + str(_)
-                    )
-                    saver.add_meta_graph_and_variables(
-                        session,
-                        ['turtle']
-                    )
-                    # trained_weights_0 = session.run(weights[0])
-                    # trained_weights_0_pd = pd.DataFrame(trained_weights_0)
-                    # trained_weights_0_pd.to_csv('weights.csv')
-                    saver.save()
+            is_smaller_than_threshold = ((lowest_cv_mae - mae_cv) / mae_cv) > 0.005
+            print(((lowest_cv_mae - mae_cv) / lowest_cv_mae))
+            if mae_cv < lowest_cv_mae and is_smaller_than_threshold:
+                lowest_cv_mae = mae_cv
+                print('step: ', _, ' | mae_cv: ', mae_cv)
+                lowest_step.append(_)
+                # trained_weights_0 = session.run(weights[0])
+                # trained_weights_0_pd = pd.DataFrame(trained_weights_0)
+                # trained_weights_0_pd.to_csv('weights.csv')
+                saver.save()

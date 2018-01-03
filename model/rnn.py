@@ -63,12 +63,22 @@ with tf.name_scope('softmax'):
 # continue with oyou
 #####################################################################
 
+# build model
 model = Model(name='turtle')
 model.features = features
 model.targets = targets
 model.prediction = predictions
 model.losses = losses
+# logs
 model.create_log_group(name='training',
-                       feed_tensors={
-
-                       })
+                       feed_tensors=[features, targets])
+model.create_log_group(name='cv',
+                       feed_tensors=[features, targets])
+model.log_scalar(name='training_loss',
+                 tensor=losses,
+                 group='training')
+model.log_scalar(name='cross_validation_loss',
+                 tensor=losses,
+                 group='cv')
+# train
+model.train()

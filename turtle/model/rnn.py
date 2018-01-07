@@ -1,15 +1,15 @@
 import tensorflow as tf
 from oyou import Model
 from twone import RNNContainer as Container
-
+import pandas as pd
 from turtle.config import feature_labels, target_label
+import numpy as np
 from turtle.data_fetcher import scrap_all
 
 ####################################################################
 # scrap data
 ####################################################################
-fetched_raw_df = scrap_all()
-
+fetched_raw_df = pd.read_csv('raw.csv')
 ####################################################################
 # process data using twone
 ####################################################################
@@ -18,9 +18,12 @@ time_steps = 20
 container = Container(data_frame=fetched_raw_df)
 container.set_feature_tags(feature_tags=feature_labels) \
     .set_target_tags(target_tags=target_label, shift=-1) \
-    .interpolate() \
-    .gen_batch(batch_size=batch_size,
-               time_steps=time_steps)
+    .interpolate()
+
+container.data[container.target_tags] = np.where((container.data['MKPRU'] < container.data['MKPRU_target']),
+                                                 1, 0)
+container.gen_batch(batch=batch_size,
+                    time_steps=time_steps)
 num_features = container.num_features
 num_targets = container.num_targets
 
@@ -30,16 +33,18 @@ num_targets = container.num_targets
 state_size = 10
 num_classes = 2
 features = tf.placeholder(dtype=tf.float32,
-                          shape=[None, None, num_features],
+                          shape=[batch_size, time_steps, num_features],
                           name='features')
-targets = tf.placeholder(dtype=tf.float32,
-                         shape=[None, None, num_targets],
+targets = tf.placeholder(dtype=tf.int32,
+                         shape=[batch_size, time_steps, num_targets],
                          name='targets')
 one_hot_target_labels = tf.one_hot(indices=targets,
-                                   depth=2)
+                                   depth=num_classes)
+one_hot_target_labels_reshaped = tf.reshape(one_hot_target_labels, shape=[batch_size, time_steps, num_classes])
 cell = tf.contrib.rnn.LSTMCell(state_size, state_is_tuple=True)
 rnn_outputs, final_state = tf.nn.dynamic_rnn(cell=cell,
-                                             inputs=features)
+                                             inputs=features,
+                                             dtype=tf.float32)
 with tf.name_scope('softmax'):
     w = tf.get_variable(name='softmax_w',
                         dtype=tf.float32,
@@ -49,11 +54,11 @@ with tf.name_scope('softmax'):
                         shape=[num_classes])
     outputs_reshaped_for_matmul = tf.reshape(tensor=rnn_outputs,
                                              shape=[-1, state_size])
-    predictions = tf.matmul(w, outputs_reshaped_for_matmul) + b
+    predictions = tf.matmul(outputs_reshaped_for_matmul, w) + b
     predictions_reshaped_for_softmax = tf.reshape(tensor=predictions,
                                                   shape=[batch_size, time_steps, num_classes])
     logits = tf.nn.softmax(predictions_reshaped_for_softmax)
-    losses = tf.losses.softmax_cross_entropy(onehot_labels=one_hot_target_labels,
+    losses = tf.losses.softmax_cross_entropy(onehot_labels=one_hot_target_labels_reshaped,
                                              logits=logits)
 #####################################################################
 # continue with oyou
@@ -76,5 +81,18 @@ model.log_scalar(name='training_loss',
 model.log_scalar(name='cross_validation_loss',
                  tensor=losses,
                  group='cv')
+# savings
+model.define_saving_strategy(indicator_tensor=losses,
+                             interval=50,
+                             feed_dict=[features, targets])
 # train
-model.train()
+model.train(features=container.get_training_features,
+            targets=container.get_training_targets,
+            training_steps=10000,
+            training_features=container.get_training_features,
+            training_targets=container.get_training_targets,
+            cv_features=container.get_cv_features,
+            cv_targets=container.get_cv_targets,
+            saving_features=container.get_cv_features,
+            saving_targets=container.get_cv_targets
+            )

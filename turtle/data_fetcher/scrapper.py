@@ -8,11 +8,11 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 import quandl
 
-from turtle.config import api_key, days_before, feature_labels
+from turtle.config import api_key, days_before, all_labels
 
 quandl.ApiConfig.api_key = api_key
 
-all_labels = feature_labels
+all_labels = all_labels
 
 
 def _scrap_(labels, start_date=None, end_date=None):

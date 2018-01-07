@@ -1,9 +1,16 @@
+# all labels
+all_labels = ['DIFF', 'TRFEE', 'MKTCP', 'TOTBC', 'MWNUS',
+              'MWNTD', 'MWTRV', 'AVBLS', 'BLCHS', 'ATRCT',
+              'MIREV', 'HRATE', 'CPTRA', 'CPTRV', 'TRVOU',
+              'TOUTV', 'ETRVU', 'ETRAV', 'NTRBL', 'NADDU',
+              'NTREP', 'NTRAT', 'NTRAN', 'MKPRU']
+
 # Define raw labels, from which function will generate feature labels
 feature_labels = ['DIFF', 'TRFEE', 'MKTCP', 'TOTBC', 'MWNUS',
                   'MWNTD', 'MWTRV', 'AVBLS', 'BLCHS', 'ATRCT',
                   'MIREV', 'HRATE', 'CPTRA', 'CPTRV', 'TRVOU',
                   'TOUTV', 'ETRVU', 'ETRAV', 'NTRBL', 'NADDU',
-                  'NTREP', 'NTRAT', 'NTRAN', 'MKPRU']
+                  'NTREP', 'NTRAT', 'NTRAN']
 
 # Define target label
 target_label = ['MKPRU']

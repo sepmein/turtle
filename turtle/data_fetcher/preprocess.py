@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from sklearn import preprocessing
 
-from turtle.config import num_feature_labels, feature_labels, days_before
+from turtle import num_feature_labels, feature_labels, days_before
 
 # prepossess using sklearn module
 gen_feature_data_training = pd.read_csv(

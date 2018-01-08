@@ -1,11 +1,11 @@
 import tensorflow as tf
 
-# import configurations
-from turtle.config import num_feature_labels, lambd, training_steps, logdir, learning_rate, record_interval
 # import data
-from turtle.data_fetcher import gen_target_data_training, \
+from turtle import gen_target_data_training, \
     gen_feature_data_training, gen_target_data_cv, \
     gen_feature_data_cv
+# import configurations
+from turtle import num_feature_labels, lambd, training_steps, logdir, learning_rate, record_interval
 
 tf.logging.set_verbosity(tf.logging.ERROR)
 # define model layers

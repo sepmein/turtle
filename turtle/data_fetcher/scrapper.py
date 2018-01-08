@@ -8,7 +8,7 @@ from datetime import date, datetime, timedelta
 import pandas as pd
 import quandl
 
-from turtle.config import api_key, days_before, all_labels
+from turtle import api_key, days_before, all_labels
 
 quandl.ApiConfig.api_key = api_key
 

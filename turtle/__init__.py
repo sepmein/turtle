@@ -1,2 +1,1 @@
-.config
-import *
+from .config import *

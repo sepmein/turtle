@@ -5,7 +5,9 @@ from oyou import Model
 from twone import RNNContainer as Container
 
 from turtle.config import feature_labels, target_label
+import shutil
 
+shutil.rmtree('./model')
 ####################################################################
 # scrap data
 ####################################################################
@@ -16,7 +18,7 @@ fetched_raw_df = pd.read_csv('raw.csv')
 # process data using twone
 ####################################################################
 batch_size = 5
-time_steps = 20
+time_steps = 50
 container = Container(data_frame=fetched_raw_df)
 container.set_feature_tags(feature_tags=feature_labels) \
     .set_target_tags(target_tags=target_label, shift=-1) \
@@ -32,7 +34,7 @@ num_targets = container.num_targets
 #####################################################################
 # build tensorflow graph
 #####################################################################
-state_size = 10
+state_size = 200
 num_classes = 2
 features = tf.placeholder(dtype=tf.float32,
                           shape=[batch_size, time_steps, num_features],
@@ -90,7 +92,7 @@ model.define_saving_strategy(indicator_tensor=losses,
 # train
 model.train(features=container.get_training_features,
             targets=container.get_training_targets,
-            training_steps=10000,
+            training_steps=1000000,
             training_features=container.get_training_features,
             training_targets=container.get_training_targets,
             cv_features=container.get_cv_features,

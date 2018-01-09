@@ -1,14 +1,16 @@
+import numpy as np
+import pandas as pd
 import tensorflow as tf
 from oyou import Model
 from twone import RNNContainer as Container
-import pandas as pd
+
 from turtle.config import feature_labels, target_label
-import numpy as np
-from turtle.data_fetcher import scrap_all
 
 ####################################################################
 # scrap data
 ####################################################################
+# df = scrap_all()
+# df.to_csv('raw.csv')
 fetched_raw_df = pd.read_csv('raw.csv')
 ####################################################################
 # process data using twone
@@ -21,7 +23,7 @@ container.set_feature_tags(feature_tags=feature_labels) \
     .interpolate()
 
 container.data[container.target_tags] = np.where((container.data['MKPRU'] < container.data['MKPRU_target']),
-                                                 1, 0)
+                                                 0, 1).reshape(-1, 1)
 container.gen_batch(batch=batch_size,
                     time_steps=time_steps)
 num_features = container.num_features

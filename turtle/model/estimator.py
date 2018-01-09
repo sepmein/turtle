@@ -1,7 +1,7 @@
 import tensorflow as tf
 
-from turtle.config import logdir
-from turtle.data_fetcher import gen_feature_data_cv
+from turtle import gen_feature_data_cv
+from turtle import logdir
 
 model_dir = logdir + '\\model381390'
 

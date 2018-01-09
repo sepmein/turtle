@@ -1,6 +1,6 @@
-from turtle.data_fetcher import preprocess
-from turtle.data_fetcher import scrap
-from turtle.model import predict
+from turtle import predict
+from turtle import preprocess
+from turtle import scrap
 
 feature = scrap()
 feature = preprocess.execute(feature)

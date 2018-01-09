@@ -4,7 +4,7 @@
 import numpy as np
 import pandas as pd
 
-from turtle.config import feature_labels, start_at, target_label, \
+from turtle import feature_labels, start_at, target_label, \
     training_set_split_ratio, cross_validation_set_split_ratio, num_feature_labels, days_before
 
 # read raw data

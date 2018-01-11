@@ -7,6 +7,7 @@ from twone import RNNContainer as Container
 from turtle.config import feature_labels, target_label
 import shutil
 
+shutil.rmtree('./log')
 shutil.rmtree('./model')
 ####################################################################
 # scrap data
@@ -17,9 +18,12 @@ fetched_raw_df = pd.read_csv('raw.csv')
 ####################################################################
 # process data using twone
 ####################################################################
-batch_size = 5
-time_steps = 50
-container = Container(data_frame=fetched_raw_df)
+batch_size = 1
+time_steps = 100
+container = Container(data_frame=fetched_raw_df,
+                      training_set_split_ratio=0.9,
+                      cross_validation_set_split_ratio=0.05,
+                      test_set_split_ratio=0.05)
 container.set_feature_tags(feature_tags=feature_labels) \
     .set_target_tags(target_tags=target_label, shift=-1) \
     .interpolate()
@@ -27,14 +31,16 @@ container.set_feature_tags(feature_tags=feature_labels) \
 container.data[container.target_tags] = np.where((container.data['MKPRU'] < container.data['MKPRU_target']),
                                                  0, 1).reshape(-1, 1)
 container.gen_batch(batch=batch_size,
-                    time_steps=time_steps)
+                    time_steps=time_steps,
+                    random_batch=False,
+                    shuffle=False)
 num_features = container.num_features
 num_targets = container.num_targets
 
 #####################################################################
 # build tensorflow graph
 #####################################################################
-state_size = 200
+state_size = 100
 num_classes = 2
 features = tf.placeholder(dtype=tf.float32,
                           shape=[batch_size, time_steps, num_features],
@@ -45,7 +51,7 @@ targets = tf.placeholder(dtype=tf.int32,
 one_hot_target_labels = tf.one_hot(indices=targets,
                                    depth=num_classes)
 one_hot_target_labels_reshaped = tf.reshape(one_hot_target_labels, shape=[batch_size, time_steps, num_classes])
-cell = tf.contrib.rnn.LSTMCell(state_size, state_is_tuple=True)
+cell = tf.contrib.rnn.GRUCell(state_size)
 rnn_outputs, final_state = tf.nn.dynamic_rnn(cell=cell,
                                              inputs=features,
                                              dtype=tf.float32)
@@ -85,6 +91,12 @@ model.log_scalar(name='training_loss',
 model.log_scalar(name='cross_validation_loss',
                  tensor=losses,
                  group='cv')
+model.log_histogram(name='softmax_w',
+                    tensor=w,
+                    group='training')
+model.log_histogram(name='softmax_b',
+                    tensor=b,
+                    group='training')
 # savings
 model.define_saving_strategy(indicator_tensor=losses,
                              interval=50,

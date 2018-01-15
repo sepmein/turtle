@@ -35,7 +35,10 @@ setup(name='turtle',
       zip_safe=False,
       install_requires=[
           'tensorflow',
-          'numpy'
+          'numpy',
+          'twone',
+          'pandas',
+          'oyou'
       ],
       test_suite='nose.collector',
       tests_require=['nose'])

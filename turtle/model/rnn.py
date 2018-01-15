@@ -21,15 +21,17 @@ fetched_raw_df = pd.read_csv('raw.csv')
 batch_size = 1
 time_steps = 100
 container = Container(data_frame=fetched_raw_df,
-                      training_set_split_ratio=0.9,
-                      cross_validation_set_split_ratio=0.05,
+                      training_set_split_ratio=0.8,
+                      cross_validation_set_split_ratio=0.15,
                       test_set_split_ratio=0.05)
 container.set_feature_tags(feature_tags=feature_labels) \
     .set_target_tags(target_tags=target_label, shift=-1) \
     .interpolate()
 
-container.data[container.target_tags] = np.where((container.data['MKPRU'] < container.data['MKPRU_target']),
-                                                 0, 1).reshape(-1, 1)
+container.data[container.target_tags] = np.where(
+    (container.data['MKPRU'] < container.data['MKPRU_target']),
+    0, 1).reshape(-1, 1)
+
 container.gen_batch(batch=batch_size,
                     time_steps=time_steps,
                     random_batch=False,
@@ -40,7 +42,7 @@ num_targets = container.num_targets
 #####################################################################
 # build tensorflow graph
 #####################################################################
-state_size = 100
+state_size = 500
 num_classes = 2
 features = tf.placeholder(dtype=tf.float32,
                           shape=[batch_size, time_steps, num_features],

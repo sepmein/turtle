@@ -1,3 +1,6 @@
+import shutil
+from os.path import isdir
+
 import numpy as np
 import pandas as pd
 import tensorflow as tf
@@ -5,10 +8,11 @@ from oyou import Model
 from twone import RNNContainer as Container
 
 from turtle.config import feature_labels, target_label
-import shutil
 
-shutil.rmtree('./log')
-shutil.rmtree('./model')
+if isdir('./log'):
+    shutil.rmtree('./log')
+if isdir('./model'):
+    shutil.rmtree('./model')
 ####################################################################
 # scrap data
 ####################################################################
@@ -50,9 +54,9 @@ features = tf.placeholder(dtype=tf.float32,
 targets = tf.placeholder(dtype=tf.int32,
                          shape=[batch_size, time_steps, num_targets],
                          name='targets')
-one_hot_target_labels = tf.one_hot(indices=targets,
-                                   depth=num_classes)
-one_hot_target_labels_reshaped = tf.reshape(one_hot_target_labels, shape=[batch_size, time_steps, num_classes])
+# one_hot_target_labels = tf.one_hot(indices=targets,
+#                                    depth=num_classes)
+target_labels_reshaped = tf.reshape(targets, shape=[batch_size, time_steps, num_targets])
 cell = tf.contrib.rnn.GRUCell(state_size)
 rnn_outputs, final_state = tf.nn.dynamic_rnn(cell=cell,
                                              inputs=features,
@@ -70,8 +74,8 @@ with tf.name_scope('softmax'):
     predictions_reshaped_for_softmax = tf.reshape(tensor=predictions,
                                                   shape=[batch_size, time_steps, num_classes])
     logits = tf.nn.softmax(predictions_reshaped_for_softmax)
-    losses = tf.losses.softmax_cross_entropy(onehot_labels=one_hot_target_labels_reshaped,
-                                             logits=logits)
+    losses = tf.losses.sparse_softmax_cross_entropy(labels=target_labels_reshaped,
+                                                    logits=logits)
 #####################################################################
 # continue with oyou
 #####################################################################

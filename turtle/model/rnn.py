@@ -77,7 +77,11 @@ with tf.name_scope('softmax'):
     losses = tf.losses.sparse_softmax_cross_entropy(labels=targets,
                                                     logits=logits)
 with tf.name_scope('accuracy'):
-    accuracy, accuracy_update_ops = tf.metrics.accuracy(
+    accuracy_training, accuracy_update_ops_training = tf.metrics.accuracy(
+        labels=targets,
+        predictions=tf.argmax(predictions_reshaped_for_softmax, axis=2)
+    )
+    accuracy_cv, accuracy_update_ops_cv = tf.metrics.accuracy(
         labels=targets,
         predictions=tf.argmax(predictions_reshaped_for_softmax, axis=2)
     )
@@ -104,13 +108,13 @@ model.log_scalar(name='cross_validation_loss',
                  tensor=losses,
                  group='cv')
 model.log_scalar(name='accuracy',
-                 tensor=accuracy,
+                 tensor=accuracy_training,
                  group='training',
-                 op=accuracy_update_ops)
+                 op=accuracy_update_ops_training)
 model.log_scalar(name='accuracy',
-                 tensor=accuracy,
+                 tensor=accuracy_cv,
                  group='cv',
-                 op=accuracy_update_ops)
+                 op=accuracy_update_ops_cv)
 model.log_histogram(name='softmax_w',
                     tensor=w,
                     group='training')

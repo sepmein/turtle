@@ -56,11 +56,11 @@ targets = tf.placeholder(dtype=tf.int32,
                          name='targets')
 # one_hot_target_labels = tf.one_hot(indices=targets,
 #                                    depth=num_classes)
-target_labels_reshaped = tf.reshape(targets, shape=[batch_size, time_steps, num_targets])
 cell = tf.contrib.rnn.GRUCell(state_size)
 rnn_outputs, final_state = tf.nn.dynamic_rnn(cell=cell,
                                              inputs=features,
                                              dtype=tf.float32)
+
 with tf.name_scope('softmax'):
     w = tf.get_variable(name='softmax_w',
                         dtype=tf.float32,
@@ -74,8 +74,14 @@ with tf.name_scope('softmax'):
     predictions_reshaped_for_softmax = tf.reshape(tensor=predictions,
                                                   shape=[batch_size, time_steps, num_classes])
     logits = tf.nn.softmax(predictions_reshaped_for_softmax)
-    losses = tf.losses.sparse_softmax_cross_entropy(labels=target_labels_reshaped,
+    losses = tf.losses.sparse_softmax_cross_entropy(labels=targets,
                                                     logits=logits)
+with tf.name_scope('accuracy'):
+    accuracy, accuracy_update_ops = tf.metrics.accuracy(
+        labels=targets,
+        predictions=tf.argmax(predictions_reshaped_for_softmax, axis=2)
+    )
+
 #####################################################################
 # continue with oyou
 #####################################################################
@@ -97,12 +103,26 @@ model.log_scalar(name='training_loss',
 model.log_scalar(name='cross_validation_loss',
                  tensor=losses,
                  group='cv')
+model.log_scalar(name='accuracy',
+                 tensor=accuracy,
+                 group='training',
+                 op=accuracy_update_ops)
+model.log_scalar(name='accuracy',
+                 tensor=accuracy,
+                 group='cv',
+                 op=accuracy_update_ops)
 model.log_histogram(name='softmax_w',
                     tensor=w,
                     group='training')
 model.log_histogram(name='softmax_b',
                     tensor=b,
                     group='training')
+model.log_histogram(name='state',
+                    tensor=final_state,
+                    group='training')
+model.log_histogram(name='state',
+                    tensor=final_state,
+                    group='cv')
 # savings
 model.define_saving_strategy(indicator_tensor=losses,
                              interval=50,

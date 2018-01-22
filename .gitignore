@@ -2,3 +2,5 @@
 .ipynb_checkpoints
 __pycache__
 turtle.egg-info
+turtle/model/model
+turtle/model/log
